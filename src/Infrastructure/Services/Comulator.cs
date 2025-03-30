@@ -1,14 +1,15 @@
-﻿using Application.Interfaces;
+﻿using Application.Dtos;
+using Application.Interfaces;
 using Domain.Entities;
 
 namespace Infrastructure.Services;
-public class Comulator(IJustJoinItJobBoardHttpClient httpClient) : IComulator
+public class Comulator(IJustJoinItJobBoardHttpClient justJoinItHttpClient) : IComulator
 {
-    private readonly IJustJoinItJobBoardHttpClient _httpClient = httpClient;
+    private readonly IJustJoinItJobBoardHttpClient _justJoinItHttpClient = justJoinItHttpClient;
 
-    public async Task<List<JobAd>> Comulate()
+    public async Task<IEnumerable<JobAdCreateDto>> Comulate()
     {
-        List<JobAd> justJoinItJobs = await _httpClient.GetJobsAsync();
+        var justJoinItJobs = await _justJoinItHttpClient.GetJobsAsync();
 
         return justJoinItJobs;
     }

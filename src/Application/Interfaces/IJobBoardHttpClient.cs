@@ -1,7 +1,8 @@
-﻿using Domain.Entities;
+﻿using Application.Dtos;
+using Domain.Entities;
 
 namespace Application.Interfaces;
 public interface IJobBoardHttpClient
 {
-    Task<List<JobAd>> GetJobsAsync();
+    Task<IEnumerable<JobAdCreateDto>> GetJobsAsync();
 }
