@@ -3,6 +3,7 @@ using Application.Interfaces.Repositories;
 using Domain;
 using Infrastructure.Repositories;
 using Infrastructure.Services;
+using Infrastructure.Services.HttpClients;
 using Microsoft.EntityFrameworkCore;
 using WebApi.Helpers;
 

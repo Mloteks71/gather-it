@@ -26,7 +26,7 @@ public class ComulatorController(IComulator comulator, IJobAdRepository jobAdRep
 
         RemoveDuplicateJobAdsTempImplementation(jobAds, jobAdsFromDb);
 
-        List<City> cities = _cityRepository.GetCitys().OrderBy(x => x.Name).ToList();
+        List<City> cities = _cityRepository.GetCities().OrderBy(x => x.Name).ToList();
         IOrderedEnumerable<CompanyName?> companyNames = _companyNameRepository.GetCompanyNames().OrderBy(x => x!.Name); ;
 
         jobAds = StandarizeCities(jobAds, cities);
