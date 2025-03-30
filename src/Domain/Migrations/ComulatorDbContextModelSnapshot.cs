@@ -96,13 +96,15 @@ namespace Domain.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("CompanyNameId")
+                    b.Property<int>("CompanyNameId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int?>("RemotePercent")
@@ -112,6 +114,7 @@ namespace Domain.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Slug")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -176,7 +179,9 @@ namespace Domain.Migrations
                 {
                     b.HasOne("Domain.Entities.CompanyName", "CompanyName")
                         .WithMany()
-                        .HasForeignKey("CompanyNameId");
+                        .HasForeignKey("CompanyNameId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("CompanyName");
                 });

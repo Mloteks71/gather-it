@@ -10,22 +10,46 @@ public class JustJoinItResponse
     [JsonPropertyName("meta")]
     public required JustJoinItMetadata MetaData { get; set; }
 
-    public List<JobAd> CreateDtos()
-    {
-        List<JobAd> Dtos = [];
+    public IEnumerable<JobAdCreateDto> GenerateJobAdCreateDtos() {
+        var companyNames = Jobs
+            .Select(x => x.CompanyName)
+            .Distinct()
+            .Select(x => new CompanyName(x))
+            .ToList();
 
-        foreach (JustJoinItJob job in Jobs ?? [])
-        {
-            List<City> cities = job.Multilocation?.Select(x => new City(x.City)).ToList() ?? [];
-            cities.Add(new City(job.City));
-            cities = cities.Distinct().ToList();
-            List<Salary> salaries = job.EmploymentTypes?.Select(x => new Salary(MapToContractType(x.Type), Convert.ToInt32(x.FromPln), Convert.ToInt32(x.ToPln))).ToList() ?? [];
-            CompanyName companyName = new(job.CompanyName);
-            JobAd JobAd = new(job.Title, null/*dodać w serwisie pytanie w pętli o każdą ofertę, żeby mieć opis*/, MapToRemoteType(job.WorkplaceType), null, cities, salaries, companyName, job.Slug/*, job.CategoryId*/);
-            Dtos.Add(JobAd);
-        }
+        var cities = Jobs
+            .Where(x => x.Multilocation is not null)
+            .SelectMany(x => x.Multilocation!)
+            .DistinctBy(y => y.City, StringComparer.InvariantCultureIgnoreCase)
+            .Select(y => new City(y.City))
+            .ToDictionary(
+                x => x,
+                x => Jobs
+                    .Where(y => y.Multilocation!
+                        .Select(z => z.City)
+                        .Contains(x.Name))
+                );
 
-        return Dtos;
+        return Jobs.Select(x =>
+            new JobAdCreateDto(
+                name: x.Title,
+                description: string.Empty,
+                remoteType: MapToRemoteType(x.WorkplaceType),
+                remotePercent: null,
+                cities: cities.Where(y => y.Value.Select(z => z.Slug)
+                        .Contains(x.Slug))
+                    .Select(y => y.Key)
+                    .ToList(),
+                salaries: x.EmploymentTypes?.Select(z => new Salary(MapToContractType(z.Type),
+                                  Convert.ToInt32(z.FromPln),
+                                  Convert.ToInt32(z.ToPln)))
+                              .ToList() ??
+                          [],
+                companyNameId: companyNames.First(y => y.Name == x.CompanyName)
+                    .Id,
+                companyName: companyNames.First(y => y.Name == x.CompanyName),
+                slug: x.Slug
+            ));
     }
 
     #region mappings
@@ -224,5 +248,5 @@ public class JustJoinItResponse
         [JsonPropertyName("level")]
         public required string Level { get; set; }
     }
+    #endregion
 }
-#endregion

@@ -1,6 +1,8 @@
-﻿using Application.Interfaces.Repositories;
+﻿using Application.Dtos;
+using Application.Interfaces.Repositories;
 using Domain;
 using Domain.Entities;
+using Infrastructure.Mappers;
 
 namespace Infrastructure.Repositories;
 public class JobAdRepository(GatherItDbContext context) : IJobAdRepository
@@ -21,9 +23,9 @@ public class JobAdRepository(GatherItDbContext context) : IJobAdRepository
              && companyNamesSet.Contains(x.CompanyName.Name)));
     }
 
-    public async Task InsertJobAds(List<JobAd> jobAds)
+    public async Task InsertJobAds(IEnumerable<JobAdCreateDto> jobAds)
     {
-        await _context.JobAds.AddRangeAsync(jobAds);
+        await _context.JobAds.AddRangeAsync(jobAds.Select(x => x.ToEntity()));
 
         await _context.SaveChangesAsync();
     }
