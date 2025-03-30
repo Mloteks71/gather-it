@@ -16,12 +16,12 @@ public class JustJoinItResponse
 
         foreach (JustJoinItJob job in Jobs ?? [])
         {
-            List<City> citys = job.Multilocation?.Select(x => new City(x.City)).ToList() ?? [];
-            citys.Add(new City(job.City));
-            citys = citys.Distinct().ToList();
-            List<Salary> salarys = job.EmploymentTypes?.Select(x => new Salary(MapToContractType(x.Type), Convert.ToInt32(x.FromPln), Convert.ToInt32(x.ToPln))).ToList() ?? [];
+            List<City> cities = job.Multilocation?.Select(x => new City(x.City)).ToList() ?? [];
+            cities.Add(new City(job.City));
+            cities = cities.Distinct().ToList();
+            List<Salary> salaries = job.EmploymentTypes?.Select(x => new Salary(MapToContractType(x.Type), Convert.ToInt32(x.FromPln), Convert.ToInt32(x.ToPln))).ToList() ?? [];
             CompanyName companyName = new(job.CompanyName);
-            JobAd JobAd = new(job.Title, null/*dodać w serwisie pytanie w pętli o każdą ofertę, żeby mieć opis*/, MapToRemoteType(job.WorkplaceType), null, citys, salarys, companyName, job.Slug/*, job.CategoryId*/);
+            JobAd JobAd = new(job.Title, null/*dodać w serwisie pytanie w pętli o każdą ofertę, żeby mieć opis*/, MapToRemoteType(job.WorkplaceType), null, cities, salaries, companyName, job.Slug/*, job.CategoryId*/);
             Dtos.Add(JobAd);
         }
 
@@ -224,34 +224,5 @@ public class JustJoinItResponse
         [JsonPropertyName("level")]
         public required string Level { get; set; }
     }
-
-    //public enum JustJoinItCategory
-    //{
-    //    JS = 1,
-    //    HTML = 2,
-    //    PHP = 3,
-    //    Ruby = 4,
-    //    Python = 5,
-    //    Java = 6,
-    //    dotNET = 7,
-    //    Scala = 8,
-    //    C = 9,
-    //    Mobile = 10,
-    //    Testing = 11,
-    //    DevOps = 12,
-    //    Admin = 13,
-    //    UXUI = 14,
-    //    PM = 15,
-    //    Game = 16,
-    //    Analytics = 17,
-    //    Security = 18,
-    //    Data = 19,
-    //    Go = 20,
-    //    Support = 21,
-    //    ERP = 22,
-    //    Architecture = 23,
-    //    Other = 24,
-    //    AI = 25
-    //}
 }
 #endregion

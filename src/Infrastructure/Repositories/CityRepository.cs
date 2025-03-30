@@ -7,7 +7,7 @@ public class CityRepository(GatherItDbContext context) : ICityRepository
 {
     private readonly GatherItDbContext _context = context;
 
-    public IEnumerable<City> GetCitys()
+    public IEnumerable<City> GetCities()
     {
         return _context.Cities;
     }
