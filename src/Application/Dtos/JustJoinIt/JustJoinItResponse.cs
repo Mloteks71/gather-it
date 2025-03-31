@@ -60,7 +60,8 @@ public class JustJoinItResponse
         { "B2B", ContractType.B2B },
         { "mandate_contract", ContractType.UZ },
         { "any", ContractType.Any },
-        { "internship", ContractType.Internship }
+        { "internship", ContractType.Internship },
+        { "contract", ContractType.Contract }
     };
 
     private static ContractType MapToContractType(string input)

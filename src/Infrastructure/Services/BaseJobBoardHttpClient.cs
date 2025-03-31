@@ -1,17 +1,18 @@
 ﻿namespace Infrastructure.Services;
-public abstract class BaseJobBoardHttpClient(HttpClient httpClient)
-{
-    private readonly HttpClient _httpClient = httpClient;
-
-    protected async Task<HttpContent> GetJobsAsync(string url)
+public abstract class BaseJobBoardHttpClient {
+    private readonly HttpClient _httpClient;
+    public BaseJobBoardHttpClient(HttpClient httpClient) {
+        _httpClient = httpClient;
+    }
+    protected async Task<HttpContent> GetJobsAsync(Uri uri)
     {
-        HttpResponseMessage response = await _httpClient.GetAsync("?&sortBy=published&orderBy=DESC&perPage=100&salaryCurrencies=PLN&page=" + url); // nie może być w base url, bo nie działa
-
+        var response = await _httpClient.GetAsync(uri);
+    
         if (!response.IsSuccessStatusCode)
         {
-            throw new Exception(response.StatusCode.ToString() + "  " + response.Content.ToString());
+            throw new Exception(response.StatusCode + "  " + response.Content);
         }
-
+    
         return response.Content;
     }
 }

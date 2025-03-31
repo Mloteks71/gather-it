@@ -2,34 +2,38 @@
 using Application.Dtos;
 using Application.Dtos.JustJoinIt;
 using Application.Interfaces;
-using Domain.Entities;
 using Microsoft.Extensions.Configuration;
 
 namespace Infrastructure.Services.HttpClients;
 
-public class JustJoinItJobBoardHttpClient : BaseJobBoardHttpClient, IJustJoinItJobBoardHttpClient
-{
-
+public class JustJoinItJobBoardHttpClient : BaseJobBoardHttpClient, IJustJoinItJobBoardHttpClient {
+    private readonly Uri _uri;
+    private int _totalPages = 1;
     public JustJoinItJobBoardHttpClient(HttpClient httpClient, IConfiguration config) : base(httpClient)
     {
-        httpClient.BaseAddress = new(config["JustJoinIt:Url"]!);
+        _uri = new Uri(config["JustJoinIt:Url"]!);
         httpClient.DefaultRequestHeaders.Add("Version", "2");
     }
 
-    public async Task<IEnumerable<JobAdCreateDto>> GetJobsAsync()
-    {
-        HttpContent content = await GetJobsAsync("1");
+    public async Task<IEnumerable<JobAdCreateDto>> GetJobsAsync() {
+        var result = new List<JobAdCreateDto>();
+        
+        for (var i = 1 ; i <= _totalPages; i++) {
+            var currentPageUri = new Uri($"{_uri}{i}");
+            var content = await GetJobsAsync(currentPageUri);
+            var justJoinItResponse = await content.ReadFromJsonAsync<JustJoinItResponse>();
 
-        var test = await content.ReadAsStringAsync();
-
-        var  justJoinItResponse = await content.ReadFromJsonAsync<JustJoinItResponse>();
-
-        if (justJoinItResponse == null)
-        {
-            throw new Exception("JustJoinIt response empty.");
+            if (justJoinItResponse == null)
+                throw new Exception("JustJoinIt response empty.");
+            
+            if (justJoinItResponse.Jobs.Count == 0)
+                break;
+            
+            _totalPages = justJoinItResponse.MetaData.TotalPages;
+            
+            result.AddRange(justJoinItResponse.GenerateJobAdCreateDtos());
         }
 
-        return justJoinItResponse.GenerateJobAdCreateDtos();
-
+        return result;
     }
 }
