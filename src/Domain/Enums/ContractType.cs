@@ -5,5 +5,6 @@ public enum ContractType
     B2B = 2,
     UZ = 3,
     Any = 4,
-    Internship = 5
+    Internship = 5,
+    Contract = 6
 }

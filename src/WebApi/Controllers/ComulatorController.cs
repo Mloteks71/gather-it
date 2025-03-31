@@ -8,28 +8,30 @@ namespace WebApi.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class ComulatorController(IComulator comulator, IJobAdRepository jobAdRepository, ICityRepository cityRepository, ICompanyNameRepository companyNameRepository, IDocumentSimilarityService documentSimilarityService) : ControllerBase
+public class ComulatorController : ControllerBase
 {
-    private readonly IComulator _comulator = comulator;
-    private readonly IJobAdRepository _jobAdRepository = jobAdRepository;
-    private readonly ICityRepository _cityRepository = cityRepository;
-    private readonly ICompanyNameRepository _companyNameRepository = companyNameRepository;
-    private readonly IDocumentSimilarityService _documentSimilarityService = documentSimilarityService;
+    private readonly IComulator _comulator;
+    private readonly IJobAdRepository _jobAdRepository;
+
+    public ComulatorController(IComulator comulator, IJobAdRepository jobAdRepository) {
+        _comulator = comulator;
+        _jobAdRepository = jobAdRepository;
+    }
 
     [HttpPost("download")]
     public async Task<ActionResult> DownloadJobData() {
-        var jobAds = (await _comulator.Comulate()).ToList();
+        var jobAdsToAdd = (await _comulator.Comulate()).ToList();
 
-        var jobAdsFromDb = _jobAdRepository.GetJobAds(jobAds.Select(x => x.CompanyName!.Name));
+        var jobAdsFromDb = _jobAdRepository.GetJobAds(jobAdsToAdd.Select(x => x.CompanyName!.Name));
 
         //jeżeli 99% oznaczyć i do tabelki wspólnej var similarityArray = _documentSimilarityService.CalculateSimilarity(jobAds.Select(x => x.Description!).ToList(), jobAdsFromDb.Select(x => x.Description!).ToList()); // nie mam description xD
-        RemoveDuplicateJobAdsTempImplementation(jobAds, jobAdsFromDb);
+        RemoveDuplicateJobAdsTempImplementation(jobAdsToAdd, jobAdsFromDb);
 
-        await _jobAdRepository.InsertJobAds(jobAds);
+        await _jobAdRepository.InsertJobAds(jobAdsToAdd);
 
         return Ok();
     }
 
-    private static void RemoveDuplicateJobAdsTempImplementation(IEnumerable<JobAdCreateDto> jobAds, IEnumerable<JobAd> jobAdsFromDb) => 
-        jobAds.ToList().RemoveAll(x => jobAdsFromDb.Any(y => y.Slug == x.Slug));
+    private static void RemoveDuplicateJobAdsTempImplementation(IEnumerable<JobAdCreateDto> jobAdsToAdd, IEnumerable<JobAd> jobAdsFromDb) => 
+        jobAdsToAdd.ToList().RemoveAll(x => jobAdsFromDb.Any(y => y.Slug == x.Slug));
 }
