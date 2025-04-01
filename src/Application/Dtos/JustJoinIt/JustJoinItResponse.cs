@@ -36,10 +36,6 @@ public class JustJoinItResponse
 
         return Jobs.Select(x => {
             var citiesKeys = citySlugLookup[x.Slug];
-            // var citiesKeys = cities
-            //     .Where(y => y.Value
-            //         .FirstOrDefault(z => z.Slug == x.Slug) is not null)
-            //     .Select(y => y.Key);
 
             var salariesKeys = (x.EmploymentTypes ?? [])
                 .Select(z =>
