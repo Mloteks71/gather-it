@@ -25,10 +25,10 @@ builder.Services.AddScoped<ICompanyNameRepository, CompanyNameRepository>();
 builder.Services.AddScoped<ICityRepository, CityRepository>();
 
 builder.Services.AddScoped<IDocumentSimilarityService, DocumentSimilarityService>();
+builder.Services.AddSingleton<IJobAdService, JobAdService>();
 builder.Services.AddScoped<IComulator, Comulator>();
 
 builder.Services.AddHttpClient<IJustJoinItJobBoardHttpClient, JustJoinItJobBoardHttpClient>();
-
 
 var app = builder.Build();
 
