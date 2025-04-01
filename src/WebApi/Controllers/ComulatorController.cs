@@ -30,7 +30,7 @@ public class ComulatorController : ControllerBase
 
         var jobAdSlugsFromDatabase = _jobAdRepository.GetJobAdsSlug().ToHashSet();
 
-        var filteredJobAdsToAdd = _jobAdService.RemoveDuplicateJobAds(comulatedJobAds, x => !jobAdSlugsFromDatabase.Contains(x.Slug));
+        var filteredJobAdsToAdd = _jobAdService.RemoveJobAds(comulatedJobAds, x => !jobAdSlugsFromDatabase.Contains(x.Slug));
 
         await _jobAdRepository.InsertJobAds(filteredJobAdsToAdd);
 

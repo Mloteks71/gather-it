@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System.Collections.Frozen;
+using System.Collections.Immutable;
 using Domain.Entities;
 using Domain.Enums;
 using System.Text.Json.Serialization;
@@ -15,14 +16,14 @@ public class JustJoinItResponse
         var companyNames = Jobs
             .DistinctBy(x => x.CompanyName)
             .Select(x => new CompanyName(x.CompanyName))
-            .ToImmutableHashSet();
+            .ToHashSet();
 
         var cities = Jobs
             .Where(x => x.Multilocation is not null)
             .SelectMany(x => x.Multilocation!)
             .DistinctBy(y => y.City, StringComparer.InvariantCultureIgnoreCase)
             .Select(y => new City(y.City))
-            .ToImmutableDictionary(
+            .ToFrozenDictionary(
                 x => x,
                 x => Jobs
                     .Where(y => y.Multilocation!
