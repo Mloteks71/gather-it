@@ -12,26 +12,23 @@ public class ComulatorController : ControllerBase
 {
     private readonly IComulator _comulator;
     private readonly IJobAdRepository _jobAdRepository;
+    private readonly IJobAdService _jobAdService;
 
-    public ComulatorController(IComulator comulator, IJobAdRepository jobAdRepository) {
+    public ComulatorController(IComulator comulator, IJobAdRepository jobAdRepository, IJobAdService jobAdService) {
         _comulator = comulator;
         _jobAdRepository = jobAdRepository;
+        _jobAdService = jobAdService;
     }
 
     [HttpPost("download")]
     public async Task<ActionResult> DownloadJobData() {
-        var jobAdsToAdd = (await _comulator.Comulate()).ToList();
+        var comulatedJobAds = (await _comulator.Comulate()).ToList();
 
-        var jobAdsFromDb = _jobAdRepository.GetJobAds(jobAdsToAdd.Select(x => x.CompanyName!.Name));
+        var jobAdSlugsFromDatabase = _jobAdRepository.GetJobAdsSlug(comulatedJobAds.Select(x => x.Slug));
 
-        //jeżeli 99% oznaczyć i do tabelki wspólnej var similarityArray = _documentSimilarityService.CalculateSimilarity(jobAds.Select(x => x.Description!).ToList(), jobAdsFromDb.Select(x => x.Description!).ToList()); // nie mam description xD
-        RemoveDuplicateJobAdsTempImplementation(jobAdsToAdd, jobAdsFromDb);
+        var filteredJobAdsToAdd = _jobAdService.RemoveDuplicateJobAds(comulatedJobAds, x => !jobAdSlugsFromDatabase.Contains(x.Slug));
 
-        await _jobAdRepository.InsertJobAds(jobAdsToAdd);
-
+        await _jobAdRepository.InsertJobAds(filteredJobAdsToAdd);
         return Ok();
     }
-
-    private static void RemoveDuplicateJobAdsTempImplementation(IEnumerable<JobAdCreateDto> jobAdsToAdd, IEnumerable<JobAd> jobAdsFromDb) => 
-        jobAdsToAdd.ToList().RemoveAll(x => jobAdsFromDb.Any(y => y.Slug == x.Slug));
 }

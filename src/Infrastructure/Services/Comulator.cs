@@ -2,9 +2,12 @@
 using Application.Interfaces;
 
 namespace Infrastructure.Services;
-public class Comulator(IJustJoinItJobBoardHttpClient justJoinItHttpClient) : IComulator
-{
-    private readonly IJustJoinItJobBoardHttpClient _justJoinItHttpClient = justJoinItHttpClient;
+public class Comulator : IComulator {
+    private readonly IJustJoinItJobBoardHttpClient _justJoinItHttpClient;
+
+    public Comulator(IJustJoinItJobBoardHttpClient justJoinItHttpClient) {
+        _justJoinItHttpClient = justJoinItHttpClient;
+    }
 
     public async Task<IEnumerable<JobAdCreateDto>> Comulate()
     {
