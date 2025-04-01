@@ -1,4 +1,5 @@
-﻿using Domain.Entities;
+﻿using System.Collections.Immutable;
+using Domain.Entities;
 using Domain.Enums;
 using System.Text.Json.Serialization;
 
@@ -12,44 +13,57 @@ public class JustJoinItResponse
 
     public IEnumerable<JobAdCreateDto> GenerateJobAdCreateDtos() {
         var companyNames = Jobs
-            .Select(x => x.CompanyName)
-            .Distinct()
-            .Select(x => new CompanyName(x))
-            .ToList();
+            .DistinctBy(x => x.CompanyName)
+            .Select(x => new CompanyName(x.CompanyName))
+            .ToImmutableHashSet();
 
         var cities = Jobs
             .Where(x => x.Multilocation is not null)
             .SelectMany(x => x.Multilocation!)
             .DistinctBy(y => y.City, StringComparer.InvariantCultureIgnoreCase)
             .Select(y => new City(y.City))
-            .ToDictionary(
+            .ToImmutableDictionary(
                 x => x,
                 x => Jobs
                     .Where(y => y.Multilocation!
-                        .Select(z => z.City)
-                        .Contains(x.Name))
+                        .FirstOrDefault(z => z.City == x.Name) is not null)
                 );
 
-        return Jobs.Select(x =>
-            new JobAdCreateDto(
+        var citySlugLookup = cities
+            .SelectMany(x => x.Value
+                .Select(y => (y.Slug, x.Key)))
+            .ToLookup(x => x.Slug, x => x.Key);
+
+        return Jobs.Select(x => {
+            var citiesKeys = citySlugLookup[x.Slug];
+            // var citiesKeys = cities
+            //     .Where(y => y.Value
+            //         .FirstOrDefault(z => z.Slug == x.Slug) is not null)
+            //     .Select(y => y.Key);
+
+            var salariesKeys = (x.EmploymentTypes ?? [])
+                .Select(z =>
+                    new Salary(
+                        MapToContractType(z.Type),
+                        Convert.ToInt32(z.FromPln),
+                        Convert.ToInt32(z.ToPln)
+                        )
+                );
+
+            var companyName = companyNames.First(y => y.Name == x.CompanyName);
+
+            return new JobAdCreateDto(
                 name: x.Title,
                 description: string.Empty,
                 remoteType: MapToRemoteType(x.WorkplaceType),
                 remotePercent: null,
-                cities: cities.Where(y => y.Value.Select(z => z.Slug)
-                        .Contains(x.Slug))
-                    .Select(y => y.Key)
-                    .ToList(),
-                salaries: x.EmploymentTypes?.Select(z => new Salary(MapToContractType(z.Type),
-                                  Convert.ToInt32(z.FromPln),
-                                  Convert.ToInt32(z.ToPln)))
-                              .ToList() ??
-                          [],
-                companyNameId: companyNames.First(y => y.Name == x.CompanyName)
-                    .Id,
-                companyName: companyNames.First(y => y.Name == x.CompanyName),
+                cities: citiesKeys,
+                salaries: salariesKeys,
+                companyNameId: companyName.Id,
+                companyName: companyName,
                 slug: x.Slug
-            ));
+            );
+        });
     }
 
     #region mappings

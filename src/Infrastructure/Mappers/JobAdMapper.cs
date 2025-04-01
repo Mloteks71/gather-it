@@ -1,6 +1,5 @@
 using Application.Dtos;
 using Domain.Entities;
-using Domain.Enums;
 
 namespace Infrastructure.Mappers;
 
@@ -11,8 +10,8 @@ public static class JobAdMapper {
             Description = jobAdCreateDto.Description,
             RemoteType = jobAdCreateDto.RemoteType,
             RemotePercent = jobAdCreateDto.RemotePercent,
-            Cities = jobAdCreateDto.Cities,
-            Salaries = jobAdCreateDto.Salaries,
+            Cities = jobAdCreateDto.Cities.ToList(),
+            Salaries = jobAdCreateDto.Salaries.ToList(),
             CompanyNameId = jobAdCreateDto.CompanyNameId,
             CompanyName = jobAdCreateDto.CompanyName,
             Slug = jobAdCreateDto.Slug,
