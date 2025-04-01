@@ -1,4 +1,5 @@
-﻿using Application.Dtos;
+﻿using System.Diagnostics;
+using Application.Dtos;
 using Application.Interfaces;
 using Application.Interfaces.Repositories;
 using Domain.Entities;
@@ -22,13 +23,19 @@ public class ComulatorController : ControllerBase
 
     [HttpPost("download")]
     public async Task<ActionResult> DownloadJobData() {
+        var stopWatch = new Stopwatch();
+        stopWatch.Start();
+        
         var comulatedJobAds = (await _comulator.Comulate()).ToList();
 
-        var jobAdSlugsFromDatabase = _jobAdRepository.GetJobAdsSlug(comulatedJobAds.Select(x => x.Slug));
+        var jobAdSlugsFromDatabase = _jobAdRepository.GetJobAdsSlug().ToHashSet();
 
         var filteredJobAdsToAdd = _jobAdService.RemoveDuplicateJobAds(comulatedJobAds, x => !jobAdSlugsFromDatabase.Contains(x.Slug));
 
         await _jobAdRepository.InsertJobAds(filteredJobAdsToAdd);
+
+        stopWatch.Stop();
+        Console.WriteLine(stopWatch.ElapsedMilliseconds);
         return Ok();
     }
 }

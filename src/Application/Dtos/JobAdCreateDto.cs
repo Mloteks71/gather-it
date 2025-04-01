@@ -9,8 +9,8 @@ public class JobAdCreateDto
     public string Description { get; set; }
     public RemoteType RemoteType { get; set; }
     public int? RemotePercent { get; set; }
-    public List<City> Cities { get; set; }
-    public List<Salary> Salaries { get; set; }
+    public IEnumerable<City> Cities { get; set; }
+    public IEnumerable<Salary> Salaries { get; set; }
     public int CompanyNameId { get; set; }
     public CompanyName CompanyName { get; set; }
     public string Slug { get; set; }
@@ -20,8 +20,8 @@ public class JobAdCreateDto
         string description,
         RemoteType remoteType,
         int? remotePercent,
-        List<City> cities,
-        List<Salary> salaries,
+        IEnumerable<City> cities,
+        IEnumerable<Salary> salaries,
         int companyNameId,
         CompanyName companyName,
         string slug)

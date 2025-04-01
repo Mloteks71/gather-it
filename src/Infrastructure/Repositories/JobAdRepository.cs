@@ -26,8 +26,8 @@ public class JobAdRepository : IJobAdRepository {
              && companyNamesSet.Contains(x.CompanyName.Name)));
     }
 
-    public IEnumerable<string> GetJobAdsSlug(IEnumerable<string> slugs) {
-        return  _context.JobAds
+    public IEnumerable<string> GetJobAdsSlug() {
+        return _context.JobAds
             .Select(x => x.Slug)
             .ToHashSet();
     }
