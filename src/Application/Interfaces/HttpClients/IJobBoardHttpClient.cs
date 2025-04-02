@@ -1,7 +1,6 @@
 ﻿using Application.Dtos;
-using Domain.Entities;
 
-namespace Application.Interfaces;
+namespace Application.Interfaces.HttpClients;
 public interface IJobBoardHttpClient
 {
     Task<IEnumerable<JobAdCreateDto>> GetJobsAsync();

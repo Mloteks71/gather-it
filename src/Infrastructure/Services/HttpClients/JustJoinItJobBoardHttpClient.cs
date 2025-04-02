@@ -1,7 +1,7 @@
 ﻿using System.Net.Http.Json;
 using Application.Dtos;
 using Application.Dtos.JustJoinIt;
-using Application.Interfaces;
+using Application.Interfaces.HttpClients;
 using Microsoft.Extensions.Configuration;
 
 namespace Infrastructure.Services.HttpClients;

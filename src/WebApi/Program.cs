@@ -1,4 +1,5 @@
 using Application.Interfaces;
+using Application.Interfaces.HttpClients;
 using Application.Interfaces.Repositories;
 using Domain;
 using Infrastructure.Repositories;
@@ -25,10 +26,11 @@ builder.Services.AddScoped<ICompanyNameRepository, CompanyNameRepository>();
 builder.Services.AddScoped<ICityRepository, CityRepository>();
 
 builder.Services.AddScoped<IDocumentSimilarityService, DocumentSimilarityService>();
-builder.Services.AddSingleton<IJobAdService, JobAdService>();
+builder.Services.AddScoped<IJobAdService, JobAdService>();
 builder.Services.AddScoped<IComulator, Comulator>();
 
 builder.Services.AddHttpClient<IJustJoinItJobBoardHttpClient, JustJoinItJobBoardHttpClient>();
+builder.Services.AddHttpClient<ISolidJobsHttpClient, SolidJobsHttpClient>();
 
 var app = builder.Build();
 
