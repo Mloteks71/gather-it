@@ -15,17 +15,19 @@ public class ComulatorController : ControllerBase
     private readonly IJobAdRepository _jobAdRepository;
     private readonly IJobAdService _jobAdService;
 
-    public ComulatorController(IComulator comulator, IJobAdRepository jobAdRepository, IJobAdService jobAdService) {
+    public ComulatorController(IComulator comulator, IJobAdRepository jobAdRepository, IJobAdService jobAdService)
+    {
         _comulator = comulator;
         _jobAdRepository = jobAdRepository;
         _jobAdService = jobAdService;
     }
 
     [HttpPost("download")]
-    public async Task<ActionResult> DownloadJobData() {
+    public async Task<ActionResult> DownloadJobData()
+    {
         var stopWatch = new Stopwatch();
         stopWatch.Start();
-        
+
         var comulatedJobAds = (await _comulator.Comulate()).ToList();
 
         var jobAdSlugsFromDatabase = _jobAdRepository.GetJobAdsSlug().ToHashSet();

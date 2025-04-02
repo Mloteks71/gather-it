@@ -18,7 +18,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<GatherItDbContext>(options =>
-    options.UseNpgsql(postgresConnectionString, 
+    options.UseNpgsql(postgresConnectionString,
         optionsBuilder => optionsBuilder.MigrationsAssembly("Domain")));
 
 builder.Services.AddScoped<IJobAdRepository, JobAdRepository>();
