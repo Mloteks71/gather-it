@@ -4,7 +4,8 @@ using Domain.Enums;
 
 namespace Application.Dtos.SolidJobs;
 
-public class SolidJobsResponse {
+public class SolidJobsResponse
+{
     [JsonPropertyName("id")]
     public int Id { get; set; }
 
@@ -82,7 +83,7 @@ public class SolidJobsResponse {
 
     [JsonPropertyName("isPremium")]
     public bool IsPremium { get; set; }
-    
+
     public class SalaryRange
     {
         [JsonPropertyName("lowerBound")]
@@ -112,7 +113,7 @@ public class SolidJobsResponse {
         [JsonPropertyName("skillLevel")]
         public string SkillLevel { get; set; }
     }
-    
+
     public static IEnumerable<JobAdCreateDto> GenerateJobAdCreateDtos(IEnumerable<SolidJobsResponse> solidJobsResponses)
     {
         return solidJobsResponses
@@ -121,31 +122,31 @@ public class SolidJobsResponse {
                 description: string.Empty,
                 remoteType: MapToRemoteType(x.RemotePossible),
                 remotePercent: null,
-                cities: new List<City> { new (x.CompanyCity) },
+                cities: new List<City> { new(x.CompanyCity) },
                 salaries: new List<Salary> { new (MapToContractType
                 (
-                    x.Salary.EmploymentType), 
-                    Convert.ToInt32(x.Salary.LowerBound), 
-                    Convert.ToInt32(x.Salary.UpperBound)) 
+                    x.Salary.EmploymentType),
+                    Convert.ToInt32(x.Salary.LowerBound),
+                    Convert.ToInt32(x.Salary.UpperBound))
                 },
                 companyNameId: 0,
                 companyName: new CompanyName(x.CompanyName),
                 slug: $"{x.Id}/{x.JobOfferKey}"
             ));
     }
-    
+
     private static RemoteType MapToRemoteType(string type)
     {
         var result = RemoteType.None;
 
         if (RemoteTypeMap.TryGetValue(type, out var flag))
         {
-            result |= flag; 
+            result |= flag;
         }
 
         return result;
     }
-    
+
     private static readonly Dictionary<string, RemoteType> RemoteTypeMap = new(StringComparer.OrdinalIgnoreCase)
     {
         { "Możliwa w całości", RemoteType.Remote },
@@ -153,7 +154,7 @@ public class SolidJobsResponse {
         { "Brak", RemoteType.Stationary },
         { "Możliwa częściowo", RemoteType.Hybrid }
     };
-    
+
     private static readonly Dictionary<string, ContractType> ContractTypeMap = new(StringComparer.OrdinalIgnoreCase)
     {
         { "Umowa o pracę", ContractType.UoP },

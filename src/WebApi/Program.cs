@@ -29,7 +29,8 @@ builder.Services.AddScoped<IDocumentSimilarityService, DocumentSimilarityService
 builder.Services.AddScoped<IJobAdService, JobAdService>();
 builder.Services.AddScoped<IComulator, Comulator>();
 
-builder.Services.AddHttpClient<IJustJoinItJobBoardHttpClient, JustJoinItJobBoardHttpClient>();
+builder.Services.AddHttpClient<IJustJoinItHttpClient, JustJoinItHttpClient>();
+builder.Services.AddHttpClient<ITheProtocolItHttpClient, TheProtocolItHttpClient>();
 builder.Services.AddHttpClient<ISolidJobsHttpClient, SolidJobsHttpClient>();
 
 var app = builder.Build();

@@ -1,4 +1,5 @@
 namespace Application.Interfaces.HttpClients;
 
-public interface ISolidJobsHttpClient : IJobBoardHttpClient{
+public interface ISolidJobsHttpClient : IJobBoardHttpClient
+{
 }

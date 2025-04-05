@@ -1,8 +1,6 @@
 ﻿using System.Diagnostics;
-using Application.Dtos;
 using Application.Interfaces;
 using Application.Interfaces.Repositories;
-using Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebApi.Controllers;

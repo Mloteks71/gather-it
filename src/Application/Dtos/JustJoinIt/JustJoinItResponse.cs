@@ -1,7 +1,6 @@
-﻿using System.Collections.Frozen;
-using System.Collections.Immutable;
-using Domain.Entities;
+﻿using Domain.Entities;
 using Domain.Enums;
+using System.Collections.Frozen;
 using System.Text.Json.Serialization;
 
 namespace Application.Dtos.JustJoinIt;
@@ -12,7 +11,10 @@ public class JustJoinItResponse
     [JsonPropertyName("meta")]
     public required JustJoinItMetadata MetaData { get; set; }
 
-    public IEnumerable<JobAdCreateDto> GenerateJobAdCreateDtos() {
+    #region mappings
+
+    public IEnumerable<JobAdCreateDto> GenerateJobAdCreateDtos()
+    {
         var companyNames = Jobs
             .DistinctBy(x => x.CompanyName)
             .Select(x => new CompanyName(x.CompanyName))
@@ -35,7 +37,8 @@ public class JustJoinItResponse
                 .Select(y => (y.Slug, x.Key)))
             .ToLookup(x => x.Slug, x => x.Key);
 
-        return Jobs.Select(x => {
+        return Jobs.Select(x =>
+        {
             var citiesKeys = citySlugLookup[x.Slug];
 
             var salariesKeys = (x.EmploymentTypes ?? [])
@@ -62,8 +65,6 @@ public class JustJoinItResponse
             );
         });
     }
-
-    #region mappings
 
     private static readonly Dictionary<string, ContractType> ContractTypeMap = new(StringComparer.OrdinalIgnoreCase)
     {
