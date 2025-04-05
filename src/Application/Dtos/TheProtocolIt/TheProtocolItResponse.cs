@@ -1,7 +1,7 @@
-﻿using Domain.Entities;
-using Domain.Enums;
-using System.Collections.Frozen;
+﻿using System.Collections.Frozen;
 using System.Text.Json.Serialization;
+using Domain.Entities;
+using Domain.Enums;
 
 namespace Application.Dtos.TheProtocolIt;
 public class TheProtocolItResponse
@@ -46,11 +46,6 @@ public class TheProtocolItResponse
             .SelectMany(x => x.Value
                 .Select(y => (y.OfferUrlName, x.Key)))
             .ToLookup(x => x.OfferUrlName, x => x.Key);
-
-        //if (Offers.Contains(x => x.))
-        //{
-
-        //}
 
         return Offers.Select(x =>
         {
