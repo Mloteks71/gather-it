@@ -3,9 +3,12 @@ using Domain.Entities;
 
 namespace Infrastructure.Mappers;
 
-public static class JobAdMapper {
-    public static JobAd ToEntity(this JobAdCreateDto jobAdCreateDto) {
-        return new JobAd {
+public static class JobAdMapper
+{
+    public static JobAd ToEntity(this JobAdCreateDto jobAdCreateDto)
+    {
+        return new JobAd
+        {
             Name = jobAdCreateDto.Name,
             Description = jobAdCreateDto.Description,
             RemoteType = jobAdCreateDto.RemoteType,
