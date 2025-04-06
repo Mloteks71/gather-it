@@ -1,8 +1,10 @@
-﻿using System.Net.Http.Json;
+﻿using System.Diagnostics;
+using System.Net.Http.Json;
 using Application.Dtos;
 using Application.Dtos.JustJoinIt;
 using Application.Interfaces.HttpClients;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Services.HttpClients;
 
@@ -10,7 +12,10 @@ public class JustJoinItHttpClient : BaseJobBoardHttpClient, IJustJoinItHttpClien
 {
     private readonly Uri _uri;
     private int _totalPages = 1;
-    public JustJoinItHttpClient(HttpClient httpClient, IConfiguration config) : base(httpClient)
+    public JustJoinItHttpClient(
+        HttpClient httpClient,
+        IConfiguration config,
+        ILogger<JustJoinItHttpClient> logger) : base(httpClient, logger)
     {
         _uri = new Uri(config["JustJoinIt:Url"]!);
         httpClient.DefaultRequestHeaders.Add("Version", "2");
@@ -18,6 +23,8 @@ public class JustJoinItHttpClient : BaseJobBoardHttpClient, IJustJoinItHttpClien
 
     public async Task<IEnumerable<JobAdCreateDto>> GetJobsAsync()
     {
+        var stopwatch = new Stopwatch();
+        stopwatch.Start();
         var result = new List<JobAdCreateDto>();
         var firstPage = new Uri($"{_uri}{1}");
         var content = await GetJobsAsync(firstPage);
@@ -50,6 +57,11 @@ public class JustJoinItHttpClient : BaseJobBoardHttpClient, IJustJoinItHttpClien
             .SelectMany(x => x.Value.Result!.GenerateJobAdCreateDtos());
 
         result.AddRange(dataToAdd);
+
+        stopwatch.Stop();
+        var elapsedMilliseconds = stopwatch.ElapsedMilliseconds;
+
+        Logger.LogInformation("Fetched {JobAdsCount} job ads from JustJoinIt in {ElapsedMilliseconds} ms", result.Count, elapsedMilliseconds);
 
         return result;
     }

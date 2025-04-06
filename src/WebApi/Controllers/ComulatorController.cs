@@ -7,13 +7,17 @@ namespace WebApi.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class ComulatorController : ControllerBase
+public class ComulatorController : BaseController
 {
     private readonly IComulator _comulator;
     private readonly IJobAdRepository _jobAdRepository;
     private readonly IJobAdService _jobAdService;
 
-    public ComulatorController(IComulator comulator, IJobAdRepository jobAdRepository, IJobAdService jobAdService)
+    public ComulatorController(
+        IComulator comulator,
+        IJobAdRepository jobAdRepository,
+        IJobAdService jobAdService,
+        ILogger<ComulatorController> logger) : base(logger)
     {
         _comulator = comulator;
         _jobAdRepository = jobAdRepository;
@@ -35,7 +39,7 @@ public class ComulatorController : ControllerBase
         await _jobAdRepository.InsertJobAds(filteredJobAdsToAdd);
 
         stopWatch.Stop();
-        Console.WriteLine(stopWatch.ElapsedMilliseconds);
+        Logger.LogInformation("Downloaded and inserted {JobAdsInserted} JobAds into the database. Time elapsed: {ElapsedMilliseconds} ms", comulatedJobAds.Count, stopWatch.ElapsedMilliseconds);
         return Ok();
     }
 }
