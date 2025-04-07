@@ -1,7 +1,7 @@
-﻿using Domain.Entities;
-using Domain.Enums;
-using System.Collections.Frozen;
+﻿using System.Collections.Frozen;
 using System.Text.Json.Serialization;
+using Domain.Entities;
+using Domain.Enums;
 
 namespace Application.Dtos.JustJoinIt;
 public class JustJoinItResponse
