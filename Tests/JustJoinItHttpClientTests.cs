@@ -4,6 +4,7 @@ using Application.Dtos.JustJoinIt;
 using Domain.Enums;
 using Infrastructure.Services.HttpClients;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
 
@@ -107,8 +108,9 @@ public class JustJoinItHttpClientTests
 
         var httpClient = CreateHttpClient(mockHandler.Object);
         var config = GetConfiguration();
+        var logger = new Mock<ILogger<JustJoinItHttpClient>>().Object;
 
-        var sut = new JustJoinItHttpClient(httpClient, config);
+        var sut = new JustJoinItHttpClient(httpClient, config, logger);
 
         // Act
         var jobs = await sut.GetJobsAsync();
@@ -144,8 +146,9 @@ public class JustJoinItHttpClientTests
 
         var httpClient = CreateHttpClient(mockHandler.Object);
         var config = GetConfiguration();
+        var logger = new Mock<ILogger<JustJoinItHttpClient>>().Object;
 
-        var sut = new JustJoinItHttpClient(httpClient, config);
+        var sut = new JustJoinItHttpClient(httpClient, config, logger);
 
         // Act
         var jobs = await sut.GetJobsAsync();
@@ -175,8 +178,9 @@ public class JustJoinItHttpClientTests
 
         var httpClient = CreateHttpClient(mockHandler.Object);
         var config = GetConfiguration();
+        var logger = new Mock<ILogger<JustJoinItHttpClient>>().Object;
 
-        var sut = new JustJoinItHttpClient(httpClient, config);
+        var sut = new JustJoinItHttpClient(httpClient, config, logger);
 
         // Act & Assert
         await Assert.ThrowsAsync<Exception>(() => sut.GetJobsAsync());
@@ -198,8 +202,9 @@ public class JustJoinItHttpClientTests
 
         var httpClient = CreateHttpClient(mockHandler.Object);
         var config = GetConfiguration();
+        var logger = new Mock<ILogger<JustJoinItHttpClient>>().Object;
 
-        var sut = new JustJoinItHttpClient(httpClient, config);
+        var sut = new JustJoinItHttpClient(httpClient, config, logger);
 
         // Act
         var jobs = await sut.GetJobsAsync();

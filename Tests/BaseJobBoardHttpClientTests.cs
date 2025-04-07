@@ -1,5 +1,6 @@
 using System.Net;
 using Infrastructure.Services;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
 
@@ -9,12 +10,13 @@ public class BaseJobBoardHttpClientTests
 {
     private readonly Mock<HttpMessageHandler> _handlerMock;
     private readonly HttpClient _httpClient;
+    private readonly ILogger _logger = Mock.Of<ILogger>();
     private readonly TestableBaseJobBoardHttpClient _testClient;
 
     // Testable derived class to test the abstract base class
     private class TestableBaseJobBoardHttpClient : BaseJobBoardHttpClient
     {
-        public TestableBaseJobBoardHttpClient(HttpClient httpClient) : base(httpClient)
+        public TestableBaseJobBoardHttpClient(HttpClient httpClient, ILogger logger) : base(httpClient, logger)
         {
         }
 
@@ -29,7 +31,7 @@ public class BaseJobBoardHttpClientTests
     {
         _handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
         _httpClient = new HttpClient(_handlerMock.Object);
-        _testClient = new TestableBaseJobBoardHttpClient(_httpClient);
+        _testClient = new TestableBaseJobBoardHttpClient(_httpClient, _logger);
     }
 
     [Fact]
