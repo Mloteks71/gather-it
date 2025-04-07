@@ -1,10 +1,14 @@
-﻿namespace Infrastructure.Services;
+﻿using Microsoft.Extensions.Logging;
+
+namespace Infrastructure.Services;
 public abstract class BaseJobBoardHttpClient
 {
     private readonly HttpClient _httpClient;
+    protected readonly ILogger Logger;
 
-    public BaseJobBoardHttpClient(HttpClient httpClient)
+    public BaseJobBoardHttpClient(HttpClient httpClient, ILogger logger)
     {
+        Logger = logger;
         _httpClient = httpClient;
     }
 

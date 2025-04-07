@@ -6,12 +6,19 @@ using Infrastructure.Repositories;
 using Infrastructure.Services;
 using Infrastructure.Services.HttpClients;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using WebApi.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
 var postgresConnectionString = DatabaseConfigHelper.GetPostgresConnectionString(configuration);
+
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -40,6 +47,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseSerilogRequestLogging();
 
 app.UseHttpsRedirection();
 

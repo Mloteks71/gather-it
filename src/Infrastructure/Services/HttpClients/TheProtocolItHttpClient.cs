@@ -1,9 +1,11 @@
-﻿using Application.Dtos;
+﻿using System.Diagnostics;
+using Application.Dtos;
 using Application.Dtos.TheProtocolIt;
 using Application.Interfaces.HttpClients;
 using Microsoft.Extensions.Configuration;
 using System.Net.Http.Json;
 using System.Text;
+using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Services.HttpClients;
 
@@ -12,7 +14,10 @@ public class TheProtocolItHttpClient : BaseJobBoardHttpClient, ITheProtocolItHtt
     private readonly Uri _uri;
     private int _totalPages = 1;
     private Dictionary<string, string?> _headers;
-    public TheProtocolItHttpClient(HttpClient httpClient, IConfiguration config) : base(httpClient)
+    public TheProtocolItHttpClient(
+        HttpClient httpClient,
+        IConfiguration config,
+        ILogger<TheProtocolItResponse> logger) : base(httpClient, logger)
     {
         _uri = new Uri(config["TheProtocolIt:Url"]!);
         var headers = config.GetSection("TheProtocolIt:HttpHeaders")
@@ -28,6 +33,8 @@ public class TheProtocolItHttpClient : BaseJobBoardHttpClient, ITheProtocolItHtt
 
     public async Task<IEnumerable<JobAdCreateDto>> GetJobsAsync()
     {
+        var stopwatch = new Stopwatch();
+        stopwatch.Start();
         var result = new List<JobAdCreateDto>();
         var firstPage = new Uri($"{_uri}{1}");
         var requestContent = new StringContent("", Encoding.UTF8, "application/json");
@@ -57,6 +64,10 @@ public class TheProtocolItHttpClient : BaseJobBoardHttpClient, ITheProtocolItHtt
             .SelectMany(x => x.Value!.GenerateJobAdCreateDtos());
 
         result.AddRange(dataToAdd);
+
+        stopwatch.Stop();
+        var elapsedMilliseconds = stopwatch.ElapsedMilliseconds;
+        Logger.LogInformation("Fetched {JobAdsCount} job ads from TheProtocolIt in {ElapsedMilliseconds} ms", result.Count, elapsedMilliseconds);
 
         return result;
     }
