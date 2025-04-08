@@ -117,7 +117,7 @@ public class JustJoinItHttpClientTests
 
         // Assert
         Assert.NotNull(jobs);
-        Assert.Equal(2, jobs.Count());
+        Assert.Single(jobs);
     }
 
     [Fact]
@@ -126,9 +126,9 @@ public class JustJoinItHttpClientTests
         // Arrange
         var mockHandler = new Mock<HttpMessageHandler>();
 
-        var page1 = CreateResponse(1, 2, 1);
-        var page2 = CreateResponse(2, 2, 2);
-        var page3 = CreateResponse(3, 2, 3);
+        var page1 = CreateResponse(1, 3, 1);
+        var page2 = CreateResponse(2, 3, 2);
+        var page3 = CreateResponse(3, 3, 3);
 
         var responses = new Queue<HttpResponseMessage>(new[]
         {

@@ -1,5 +1,5 @@
 using System.Net;
-using Infrastructure.Services;
+using Infrastructure.Services.HttpClients;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
@@ -9,7 +9,6 @@ namespace Tests;
 public class BaseJobBoardHttpClientTests
 {
     private readonly Mock<HttpMessageHandler> _handlerMock;
-    private readonly HttpClient _httpClient;
     private readonly ILogger _logger = Mock.Of<ILogger>();
     private readonly TestableBaseJobBoardHttpClient _testClient;
 
@@ -30,8 +29,8 @@ public class BaseJobBoardHttpClientTests
     public BaseJobBoardHttpClientTests()
     {
         _handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
-        _httpClient = new HttpClient(_handlerMock.Object);
-        _testClient = new TestableBaseJobBoardHttpClient(_httpClient, _logger);
+        var httpClient = new HttpClient(_handlerMock.Object);
+        _testClient = new TestableBaseJobBoardHttpClient(httpClient, _logger);
     }
 
     [Fact]
