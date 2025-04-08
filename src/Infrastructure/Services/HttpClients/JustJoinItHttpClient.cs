@@ -41,13 +41,13 @@ public class JustJoinItHttpClient : BaseJobBoardHttpClient, IJustJoinItHttpClien
         result.AddRange(justJoinItResponse.GenerateJobAdCreateDtos());
 
         var pagesToFetch = Enumerable
-            .Range(2, _totalPages)
+            .Range(2, _totalPages - 1)
             .ToDictionary(x => x, x => GetJobsAsync(new Uri($"{_uri}{x}")));
 
         await Task.WhenAll(pagesToFetch.Values);
 
         var pagesToMap = Enumerable
-            .Range(2, _totalPages)
+            .Range(2, _totalPages - 1)
             .ToDictionary(x => x, x => pagesToFetch[x].Result.ReadFromJsonAsync<JustJoinItResponse>());
 
         await Task.WhenAll(pagesToMap.Values);
