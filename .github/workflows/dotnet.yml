@@ -24,8 +24,6 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore
-    - name: Test
-      run: dotnet test --no-build --verbosity normal
       
   format:
   
@@ -40,3 +38,19 @@ jobs:
         dotnet-version: 8.0.x
     - name: Check code formatting with dotnet format
       run: dotnet format --no-restore --verify-no-changes --severity warn --report ./format.json 
+
+  tests:
+    runs-on: ubuntu-latest
+    needs: 
+      - build 
+      - format
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Running tests
+        run: dotnet test --no-build --verbosity normal
+      
