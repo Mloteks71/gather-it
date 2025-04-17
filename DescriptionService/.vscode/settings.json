@@ -1,0 +1,34 @@
+{
+    "go.useLanguageServer": true,
+    "go.languageServerFlags": [
+        "-remote=auto"
+    ],
+    "go.lintTool": "staticcheck",
+    "go.lintFlags": [
+        "--enable-all"
+    ],
+    "go.formatTool": "goimports",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": true
+    },
+    "go.testFlags": [
+        "-v"
+    ],
+    "go.testTimeout": "30s",
+    "go.coverOnSave": false,
+    "go.toolsManagement.autoUpdate": true,
+    "[go]": {
+        "editor.defaultFormatter": "golang.go",
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4
+    },
+    "gopls": {
+        "ui.diagnostic.analyses": {
+            "unusedparams": true,
+            "fillreturns": true,
+            "nonewvars": true
+        },
+        "staticcheck": true
+    }
+}
