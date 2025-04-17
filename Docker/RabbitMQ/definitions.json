@@ -1,0 +1,11 @@
+{
+    "queues": [
+      {
+        "name": "JustJoinItDescription",
+        "vhost": "/",
+        "durable": false,
+        "auto_delete": true,
+        "arguments": {}
+      }
+    ]
+  }
