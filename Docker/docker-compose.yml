@@ -2,7 +2,7 @@ services:
   webapi:
     image: ${DOCKER_REGISTRY-}webapi
     build:
-      context: Comulator/
+      context: ../Comulator/
       dockerfile: WebApi/Dockerfile
     ports:
       - "8080:8080"
