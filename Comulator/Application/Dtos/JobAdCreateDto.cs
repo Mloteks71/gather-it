@@ -15,7 +15,7 @@ public class JobAdCreateDto
     public CompanyName CompanyName { get; set; }
     public string Slug { get; set; }
     public Site Site { get; set; }
-    
+
     public JobAdCreateDto(
         string name,
         string description,
