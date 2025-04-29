@@ -1,11 +1,53 @@
 {
-    "queues": [
-      {
-        "name": "JustJoinItDescription",
-        "vhost": "/",
-        "durable": false,
-        "auto_delete": true,
-        "arguments": {}
-      }
-    ]
-  }
+  "users": [
+    {
+      "name": "rabbituser",
+      "password": "rabbitpass",
+      "tags": "administrator"
+    }
+  ],
+  "vhosts": [
+    {
+      "name": "/"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "rabbituser",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "description_exchange",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "queues": [
+    {
+      "name": "JustJoinItDescription",
+      "vhost": "/",
+      "durable": false,
+      "auto_delete": true,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "description_exchange",
+      "vhost": "/",
+      "destination": "JustJoinItDescription",
+      "destination_type": "queue",
+      "routing_key": "JustJoinItDescription",
+      "arguments": {}
+    }
+  ]
+}

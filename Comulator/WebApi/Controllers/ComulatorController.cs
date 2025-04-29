@@ -45,7 +45,7 @@ public class ComulatorController : BaseController
 
         var filteredJobAdsToAdd = _jobAdService.RemoveJobAds(comulatedJobAds, x => !jobAdSlugsFromDatabase.Contains(x.Slug));
 
-        var insertedJobAds = await _writeJobAdRepository.InsertJobAds(filteredJobAdsToAdd);
+        var insertedJobAds = await _writeJobAdRepository.InsertJobAds(filteredJobAdsToAdd/*, true*/);
 
         await _descriptionServiceMessageSender.SendDescriptionRequestList(insertedJobAds.ToLookup(x => x.Site, x => new DescriptionRequestDto { Id = x.Id, Slug = x.Slug }));
 

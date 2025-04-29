@@ -20,6 +20,19 @@ services:
       - postgres
       - rabbitmq
 
+  descriptionservice:
+    build:
+      context: ../DescriptionService
+      dockerfile: Dockerfile
+    ports:
+      - "8090:8090"
+    depends_on:
+      - webapi
+      - rabbitmq
+    environment:
+      - RABBITMQ_URL=amqp://rabbituser:rabbitpass@rabbitmq:5672/
+      - WEBAPI_URL=http://webapi:8080/
+
   postgres:
     image: postgres
     restart: always
@@ -33,17 +46,19 @@ services:
       - database-postgres:/var/lib/postgresql/data
 
   rabbitmq:
-    image: rabbitmq:3-management
+    image: rabbitmq:3.12-management
     restart: always
     environment:
       RABBITMQ_DEFAULT_USER: rabbituser
       RABBITMQ_DEFAULT_PASS: rabbitpass
+      RABBITMQ_DEFINITIONS_FILE: "/etc/rabbitmq/definitions.json"
     ports:
-      - "5672:5672" # AMQP protocol port
-      - "15672:15672" # Management UI port
+      - "5672:5672"
+      - "15672:15672"
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
       - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
 
 volumes:
   database-postgres:

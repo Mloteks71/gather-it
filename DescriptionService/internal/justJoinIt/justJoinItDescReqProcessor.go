@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"regexp"
 	"strings"
@@ -14,14 +15,12 @@ import (
 	model "gather.it/DescriptionService/internal/sharedModel"
 )
 
-// Processor handles the processing of requests
 type Processor struct {
 	config model.Config
 	client *http.Client
-	output []model.DescriptionOutputItem // Stores processed items for batch sending
+	output []model.DescriptionOutputItem
 }
 
-// NewProcessor creates a new Processor instance
 func NewProcessor(config model.Config) *Processor {
 	return &Processor{
 		config: config,
@@ -32,34 +31,25 @@ func NewProcessor(config model.Config) *Processor {
 	}
 }
 
-// ProcessItems processes a list of input items and stores results for batch sending
 func (p *Processor) ProcessItems(items []model.DescriptionInputItem) error {
 	for _, item := range items {
-		// Make the request to the source URL
 		respBody, err := p.makeRequest(item)
 		if err != nil {
 			return fmt.Errorf("failed to make request for item %d: %v", item.Id, err)
 		}
-
-		// Process the response
-		cutDescription, err := p.processResponse(respBody)
+		cutDescription, err := p.processResponse(respBody, item.Slug)
 		if err != nil {
 			return fmt.Errorf("failed to process response for item %d: %v", item.Id, err)
 		}
-
-		// Store the processed item
 		p.output = append(p.output, model.DescriptionOutputItem{
 			Id:             item.Id,
 			CutDescription: cutDescription,
 		})
-
-		// Delay between requests if needed
 		if p.config.RequestDelay > 0 {
 			time.Sleep(p.config.RequestDelay)
 		}
 	}
 
-	// Send all processed items in a single batch
 	if len(p.output) > 0 {
 		if err := p.sendBatch(); err != nil {
 			return fmt.Errorf("failed to send batch: %v", err)
@@ -69,27 +59,23 @@ func (p *Processor) ProcessItems(items []model.DescriptionInputItem) error {
 	return nil
 }
 
-// makeRequest makes an HTTP request to the source URL
 func (p *Processor) makeRequest(item model.DescriptionInputItem) (string, error) {
-	req, err := http.NewRequest("GET", p.config.SourceURL, nil)
+	req, err := http.NewRequest("GET", p.config.SourceURL+item.Slug, nil)
 	if err != nil {
+		log.Printf("error: %s", err)
 		return "", err
 	}
 
-	// Add headers
 	for key, value := range p.config.Headers {
 		req.Header.Add(key, value)
 	}
 
-	// Add query parameters if needed
 	q := req.URL.Query()
-	q.Add("slug", item.Slug)
 	req.URL.RawQuery = q.Encode()
 
 	var respBody string
 	var lastErr error
 
-	// Retry logic
 	for attempt := 0; attempt <= p.config.MaxRetries; attempt++ {
 		if attempt > 0 {
 			time.Sleep(p.config.RetryDelay)
@@ -104,6 +90,7 @@ func (p *Processor) makeRequest(item model.DescriptionInputItem) (string, error)
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
+			log.Printf("error: %s", resp.StatusCode)
 			lastErr = fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 			continue
 		}
@@ -126,64 +113,55 @@ func (p *Processor) makeRequest(item model.DescriptionInputItem) (string, error)
 	return respBody, nil
 }
 
-// processResponse processes the response body and extracts the required substring
-func (p *Processor) processResponse(body string) (string, error) {
-	// Find the position of "OfferDetailsShell"
+func (p *Processor) processResponse(body string, slug string) (string, error) {
 	startMarker := "OfferDetailsShell"
 	startPos := strings.Index(body, startMarker)
 	if startPos == -1 {
 		return "", errors.New("OfferDetailsShell not found in response")
 	}
 
-	// Calculate the start position (7 characters after the end of OfferDetailsShell)
-	startPos += len(startMarker) + 7
+	startPos += len(startMarker)
 	if startPos >= len(body) {
 		return "", errors.New("start position exceeds response length")
 	}
 
-	// Find the position of the first "label": after the start position
+	trueStartPos := strings.Index(body[startPos:], "<")
+	trueStartPos += startPos
+
 	endMarker := `"label":`
-	endPos := strings.Index(body[startPos:], endMarker)
+	endPos := strings.Index(body[trueStartPos:], endMarker)
 	if endPos == -1 {
+		log.Printf("label marker not found after OfferDetailsShell for %s", slug)
 		return "", errors.New("label marker not found after OfferDetailsShell")
 	}
 
-	// Extract the substring
-	cutDescription := body[startPos : startPos+endPos]
+	cutDescription := body[trueStartPos : trueStartPos+endPos-4]
 
-	// Clean HTML tags and handle <br> tags
 	cleaned := p.cleanHTML(cutDescription)
 
 	return strings.TrimSpace(cleaned), nil
 }
 
-// cleanHTML removes HTML tags and converts <br> tags to newlines
 func (p *Processor) cleanHTML(input string) string {
-	// First replace <br> tags with newlines
 	reBr := regexp.MustCompile(`(?i)<br\s*/?>`)
 	withNewlines := reBr.ReplaceAllString(input, "\n")
 
-	// Then remove all other HTML tags
 	reTags := regexp.MustCompile(`(?i)<[^>]*>`)
 	cleaned := reTags.ReplaceAllString(withNewlines, "")
 
-	// Replace multiple spaces/newlines with single ones
 	reSpaces := regexp.MustCompile(`\s+`)
 	cleaned = reSpaces.ReplaceAllString(cleaned, " ")
 
-	// Trim leading/trailing whitespace and newlines
 	cleaned = strings.TrimSpace(cleaned)
 
 	return cleaned
 }
 
-// sendBatch sends all processed items in a single request
 func (p *Processor) sendBatch() error {
 	if len(p.output) == 0 {
 		return nil
 	}
 
-	// Prepare the request body
 	requestBody, err := json.Marshal(p.output)
 	if err != nil {
 		return err
@@ -191,32 +169,35 @@ func (p *Processor) sendBatch() error {
 
 	req, err := http.NewRequest("POST", p.config.TargetURL, bytes.NewBuffer(requestBody))
 	if err != nil {
+		log.Printf("Error: %s", err)
 		return err
 	}
 
-	// Add headers
-	for key, value := range p.config.Headers {
-		req.Header.Add(key, value)
-	}
 	req.Header.Set("Content-Type", "application/json")
 
 	var lastErr error
 
-	// Retry logic
 	for attempt := 0; attempt <= p.config.MaxRetries; attempt++ {
 		if attempt > 0 {
 			time.Sleep(p.config.RetryDelay)
 		}
+
+		req, err := http.NewRequest("POST", p.config.TargetURL, bytes.NewBuffer(requestBody))
+		if err != nil {
+			log.Printf("Error creating request: %s", err)
+			lastErr = err
+			continue
+		}
+		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := p.client.Do(req)
 		if err != nil {
 			lastErr = err
 			continue
 		}
-
 		defer resp.Body.Close()
 
-		if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode != http.StatusCreated {
 			lastErr = fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 			continue
 		}

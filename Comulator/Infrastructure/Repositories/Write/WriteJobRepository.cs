@@ -6,24 +6,26 @@ using Domain.Entities;
 using EFCore.BulkExtensions;
 using Infrastructure.Mappers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
-namespace Infrastructure.Repositories;
+namespace Infrastructure.Repositories.Write;
 public class WriteJobRepository : IWriteJobAdRepository
 {
     private readonly GatherItDbContext _context;
-    public WriteJobRepository(GatherItDbContext context)
+    private readonly ILogger _logger;
+    public WriteJobRepository(GatherItDbContext context, ILogger<IWriteJobAdRepository> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     public async Task AddDescription(FrozenDictionary<int, string> descriptions)
     {
         var entitiesToUpdate = await _context.JobAds
         .Where(jobAd => descriptions.Keys.Contains(jobAd.Id))
-        .AsTracking() // Ensure entities are tracked
+        .AsTracking()
         .ToListAsync();
 
-        // 2. Update the entities in memory
         foreach (var entity in entitiesToUpdate)
         {
             if (descriptions.TryGetValue(entity.Id, out var newDescription))
@@ -32,29 +34,33 @@ public class WriteJobRepository : IWriteJobAdRepository
             }
         }
 
-        // 3. Bulk mark as modified (more efficient than individual tracking)
         _context.UpdateRange(entitiesToUpdate);
 
-        // 4. Single database operation
         await _context.SaveChangesAsync();
     }
 
     public async Task<List<JobAd>> InsertJobAds(IEnumerable<JobAdCreateDto> jobAdCreateDtos, bool doBulkInsert = false)
     {
-        var jobAds = jobAdCreateDtos.Select(x => x.ToEntity());
+        var jobAds = jobAdCreateDtos.Select(x => x.ToEntity()).ToList();
+        jobAds = jobAds.Where(x => x.Site == Domain.Enums.Site.JustJoinIt).Chunk(50).First().ToList();
         if (doBulkInsert)
         {
             var batches = jobAds.Chunk(500);
 
             foreach (var batch in batches)
-                await _context.BulkInsertAsync(batch);
+            {
+                await _context.BulkInsertAsync(batch, new BulkConfig { SetOutputIdentity = true });
+                _logger.LogInformation($"Batch Id = {batch[1].Id}");
+            }
 
+            await _context.SaveChangesAsync();
             return jobAds.ToList();
         }
 
         await _context.JobAds.AddRangeAsync(jobAds);
         await _context.SaveChangesAsync();
-
+        var jobAdsList = jobAds.ToList();
+        _logger.LogInformation($"No batch Id = {jobAdsList.FirstOrDefault()?.Id}");
         return jobAds.ToList();
     }
 }
