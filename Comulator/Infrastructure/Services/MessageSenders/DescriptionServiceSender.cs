@@ -3,34 +3,43 @@ using Application.Dtos.Messages.Requests;
 using Application.Interfaces.MessageSenders;
 using Domain.Enums;
 using Microsoft.Extensions.Configuration;
-using RabbitMQ.Client;
+using Microsoft.Extensions.Logging;
+using RabbitMQ.Client.Core.DependencyInjection.Services.Interfaces;
 
 namespace Infrastructure.Services.MessageSenders;
 public class DescriptionServiceMessageSender : IDescriptionServiceMessageSender
 {
-    private readonly string _HostName;
-    private readonly Dictionary<Site, string> _RoutingKeys;
-    public DescriptionServiceMessageSender(IConfiguration config)
+    private readonly Dictionary<Site, string> _routingKeys;
+    private readonly IProducingService _producingService;
+    private readonly IConfiguration _configuration;
+    private readonly ILogger Logger;
+
+    public DescriptionServiceMessageSender(IConfiguration config, IProducingService producingService, ILogger<IDescriptionServiceMessageSender> logger)
     {
-        _HostName = config["RabbitMQ:HostName"]!;
-        _RoutingKeys = config.GetSection("RabbitMQ:DescriptionServiceRoutingKeys")
+        _routingKeys = config.GetSection("RabbitMQ:DescriptionServiceRoutingKeys")
                     .GetChildren()
                     .ToDictionary(x => (Site)Enum.Parse(typeof(Site), x.Key), x => x.Value!);
+        _producingService = producingService;
+        _configuration = config;
+        Logger = logger;
     }
 
     public virtual async Task SendDescriptionRequestList(ILookup<Site, DescriptionRequestDto> descriptionRequestDtoLookup)
     {
-        var factory = new ConnectionFactory { HostName = _HostName };
-        using var connection = await factory.CreateConnectionAsync();
-        using var channel = await connection.CreateChannelAsync();
-
-        var props = new BasicProperties();
-
-        foreach (var descriptionRequestDtoList in descriptionRequestDtoLookup)
+        foreach (IGrouping<Site, DescriptionRequestDto> descriptionRequestDtoList in descriptionRequestDtoLookup)
         {
-            var routingKey = _RoutingKeys[descriptionRequestDtoList.Key];
-            byte[] messageBodyBytes = Encoding.UTF8.GetBytes(descriptionRequestDtoList.ToString()!);
-            await channel.BasicPublishAsync(exchange: string.Empty, routingKey: routingKey, mandatory: false, basicProperties: props, body: messageBodyBytes);
+            if (descriptionRequestDtoList.Key != Site.JustJoinIt)
+            {
+                return;
+            }
+
+            var routingKey = _routingKeys[descriptionRequestDtoList.Key];
+            var exchangeName = _configuration["RabbitMQ:Exchange:Name"]!;
+            byte[] messageBodyBytes = Encoding.UTF8.GetBytes(descriptionRequestDtoList.ToList().ToString()!);
+
+            Logger.LogInformation("RoutingKey {routingKey}, exchangeName {exchangeName}", routingKey, exchangeName);
+
+            await _producingService.SendAsync(descriptionRequestDtoList.ToList(), exchangeName, routingKey);
         }
     }
 }

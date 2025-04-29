@@ -12,7 +12,7 @@ public class JobAdController : BaseController
 {
     private readonly IWriteJobAdRepository _writeJobAdRepository;
 
-    public JobAdController(ILogger logger, IWriteJobAdRepository jobAdRepository) : base(logger)
+    public JobAdController(ILogger<JobAdController> logger, IWriteJobAdRepository jobAdRepository) : base(logger)
     {
         _writeJobAdRepository = jobAdRepository;
     }

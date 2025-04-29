@@ -161,7 +161,9 @@ public class SolidJobsResponse
         { "Umowa o pracę", ContractType.UoP },
         { "B2B", ContractType.B2B },
         { "Umowa zlecenie", ContractType.UZ },
-        { "Umowa o dzieło", ContractType.Contract }
+        { "Umowa o dzieło", ContractType.Contract },
+        { "Umowa o praktykę", ContractType.Internship },
+        { "Umowa o staż", ContractType.Internship }
     };
 
     private static ContractType MapToContractType(string input)

@@ -15,53 +15,36 @@ import (
 
 func main() {
 	config := model.Config{
-		SourceURL:    "https://api.example.com/offers",
-		TargetURL:    "https://api.example.com/processed",
+		SourceURL:    "https://justjoin.it/job-offer/",
+		TargetURL:    "http://webapi:8080/api/JobAd/Description",
 		RequestDelay: 250 * time.Millisecond,
 		MaxRetries:   3,
 		RetryDelay:   2 * time.Second,
 		Headers: map[string]string{
-			"Authorization": "Bearer your-token",
-			"User-Agent":    "RequestProcessor/1.0",
+			"rsc": "1",
 		},
 	}
 
-	// RabbitMQ connection URL
-	rabbitMQURL := "amqp://rabbituser:rabbitpass@localhost:5672/%2F/JustJoinItDescription"
-
-	// Connect to RabbitMQ
-	conn, err := amqp.Dial(rabbitMQURL)
-	if err != nil {
-		log.Fatalf("Failed to connect to RabbitMQ: %v", err)
+	rabbitMQURL := os.Getenv("RABBITMQ_URL")
+	if rabbitMQURL == "" {
+		rabbitMQURL = "amqp://rabbituser:rabbitpass@rabbitmq:5672/"
 	}
+
+	conn := connectToRabbitMQ(rabbitMQURL, 10, 2*time.Second)
 	defer conn.Close()
 
-	// Create a channel
 	ch, err := conn.Channel()
 	if err != nil {
 		log.Fatalf("Failed to open a channel: %v", err)
 	}
 	defer ch.Close()
 
-	// Declare a queue (this will create it if it doesn't exist)
 	queueName := "JustJoinItDescription"
-	q, err := ch.QueueDeclare(
-		queueName, // name
-		false,     // durable
-		true,      // delete when unused
-		false,     // exclusive
-		false,     // no-wait
-		nil,       // arguments
-	)
-	if err != nil {
-		log.Fatalf("Failed to declare a queue: %v", err)
-	}
 
-	// Consume messages from the queue
 	msgs, err := ch.Consume(
-		q.Name,                          // queue
-		"JustJoinItDescriptionConsumer", // consumer
-		false,                           // auto-ack (set to false to manually acknowledge)
+		queueName,
+		"JustJoinItDescriptionConsumer", // consumer tag
+		false,                           // auto-ack
 		false,                           // exclusive
 		false,                           // no-local
 		false,                           // no-wait
@@ -71,57 +54,53 @@ func main() {
 		log.Fatalf("Failed to register a consumer: %v", err)
 	}
 
-	// Set up a channel to handle shutdown signals
 	stopChan := make(chan os.Signal, 1)
 	signal.Notify(stopChan, syscall.SIGINT, syscall.SIGTERM)
 
 	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
 
-	// Process messages in a goroutine
 	go func() {
 		for d := range msgs {
-			log.Printf("Received a message: %s", d.Body)
-
-			// Simulate message processing
-			time.Sleep(1 * time.Second)
 
 			var payload model.DescriptionInput
 			if err := json.Unmarshal(d.Body, &payload); err != nil {
 				log.Printf("Error decoding JSON: %v", err)
-				d.Nack(false, false) // Discard malformed message
+				d.Nack(false, false)
 				continue
 			}
-
-			// Access your data
 			processor := justJoinIt.NewProcessor(config)
-			// for _, item := range payload.Items {
-			// 	log.Printf("Processing item ID: %d, Description: %s", item.Id, item.Slug)
-
-			// 	// Your business logic here
-			// 	if err := processItem(item); err != nil {
-			// 		log.Printf("Error processing item %d: %v", item.Id, err)
-			// 		d.Nack(false, true) // Requeue on failure
-			// 		continue
-			// 	}
-			// }
-			// Process items (will send batch automatically at the end)
-			if err := processor.ProcessItems(payload.Items); err != nil {
-				log.Fatalf("Processing failed: %v", err)
+			if err := processor.ProcessItems(payload); err != nil {
+				log.Printf("Processing failed: %v", err)
+				d.Nack(false, true)
+				continue
 			}
-
 			log.Println("Processing completed successfully")
 
-			// // Acknowledge after successful processing
-			// d.Ack(false)
-
-			// Acknowledge the message
 			if err := d.Ack(false); err != nil {
 				log.Printf("Error acknowledging message: %v", err)
 			}
 		}
 	}()
 
-	// Wait for shutdown signal
 	<-stopChan
 	log.Println("Shutting down consumer...")
+}
+
+func connectToRabbitMQ(rabbitMQURL string, maxRetries int, retryDelay time.Duration) *amqp.Connection {
+	var conn *amqp.Connection
+	var err error
+
+	for i := 0; i < maxRetries; i++ {
+		conn, err = amqp.Dial(rabbitMQURL)
+		if err == nil {
+			log.Printf("Connected to RabbitMQ")
+			return conn
+		}
+
+		log.Printf("Failed to connect to RabbitMQ (attempt %d/%d): %v", i+1, maxRetries, err)
+		time.Sleep(retryDelay)
+	}
+
+	log.Fatalf("Could not connect to RabbitMQ after %d attempts: %v", maxRetries, err)
+	return nil
 }

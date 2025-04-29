@@ -6,10 +6,14 @@ using Application.Interfaces.Repositories.Read;
 using Application.Interfaces.Repositories.Write;
 using Domain;
 using Infrastructure.Repositories;
+using Infrastructure.Repositories.Read;
+using Infrastructure.Repositories.Write;
 using Infrastructure.Services;
 using Infrastructure.Services.HttpClients;
 using Infrastructure.Services.MessageSenders;
 using Microsoft.EntityFrameworkCore;
+using RabbitMQ.Client.Core.DependencyInjection;
+using RabbitMQ.Client.Core.DependencyInjection.Configuration;
 using Serilog;
 using WebApi.Helpers;
 
@@ -46,6 +50,18 @@ builder.Services.AddHttpClient<IJustJoinItHttpClient, JustJoinItHttpClient>();
 builder.Services.AddHttpClient<ITheProtocolItHttpClient, TheProtocolItHttpClient>();
 builder.Services.AddHttpClient<ISolidJobsHttpClient, SolidJobsHttpClient>();
 
+var rabbitSection = configuration.GetSection("RabbitMQ");
+var rabbitMQConfiguration = new RabbitMqServiceOptions
+{
+    HostName = rabbitSection["HostName"]!,
+    Port = Convert.ToInt32(rabbitSection["Port"]!),
+    UserName = rabbitSection["UserName"]!,
+    Password = rabbitSection["Password"]!
+};
+builder.Services.AddRabbitMqServices(rabbitMQConfiguration);
+
+builder.Services.AddProductionExchange(rabbitSection["Exchange:Name"]!, new RabbitMqExchangeOptions());
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -57,12 +73,15 @@ if (app.Environment.IsDevelopment())
 app.UseSerilogRequestLogging();
 
 await using (var serviceScope = app.Services.CreateAsyncScope())
-using (var dbContext = serviceScope.ServiceProvider.GetRequiredService<GatherItDbContext>())
+await using (var dbContext = serviceScope.ServiceProvider.GetRequiredService<GatherItDbContext>())
 {
     dbContext.Database.Migrate();
 }
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthorization();
 

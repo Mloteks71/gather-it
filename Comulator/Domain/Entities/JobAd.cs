@@ -1,8 +1,10 @@
-﻿using Domain.Enums;
+﻿using System.ComponentModel.DataAnnotations;
+using Domain.Enums;
 
 namespace Domain.Entities;
 public record JobAd
 {
+    [Key]
     public int Id { get; set; }
     public required string Name { get; set; } = null!;
     public required string Description { get; set; } = null!;
