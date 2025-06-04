@@ -38,6 +38,13 @@
       "durable": false,
       "auto_delete": true,
       "arguments": {}
+    },
+    {
+      "name": "TheProtocolItDescription",
+      "vhost": "/",
+      "durable": false,
+      "auto_delete": true,
+      "arguments": {}
     }
   ],
   "bindings": [
@@ -46,7 +53,15 @@
       "vhost": "/",
       "destination": "JustJoinItDescription",
       "destination_type": "queue",
-      "routing_key": "JustJoinItDescription",
+      "routing_key": "JustJoinIt",
+      "arguments": {}
+    },
+    {
+      "source": "description_exchange",
+      "vhost": "/",
+      "destination": "TheProtocolItDescription",
+      "destination_type": "queue",
+      "routing_key": "TheProtocolIt",
       "arguments": {}
     }
   ]

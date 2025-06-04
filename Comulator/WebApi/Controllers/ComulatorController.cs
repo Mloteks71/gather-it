@@ -34,7 +34,7 @@ public class ComulatorController : BaseController
     }
 
     [HttpPost("Download")]
-    public async Task<ActionResult> DownloadJobData()
+    public async Task<ActionResult> DownloadJobData(bool getDescription = true)
     {
         var stopWatch = new Stopwatch();
         stopWatch.Start();
@@ -47,7 +47,10 @@ public class ComulatorController : BaseController
 
         var insertedJobAds = await _writeJobAdRepository.InsertJobAds(filteredJobAdsToAdd/*, true*/);
 
-        await _descriptionServiceMessageSender.SendDescriptionRequestList(insertedJobAds.ToLookup(x => x.Site, x => new DescriptionRequestDto { Id = x.Id, Slug = x.Slug }));
+        if (getDescription)
+        {
+            await _descriptionServiceMessageSender.SendDescriptionRequestList(insertedJobAds.ToLookup(x => x.Site, x => new DescriptionRequestDto { Id = x.Id, Slug = x.Slug }));
+        }
 
         stopWatch.Stop();
         Logger.LogInformation("Downloaded and inserted {JobAdsInserted} JobAds into the database. Time elapsed: {ElapsedMilliseconds} ms", comulatedJobAds.Count, stopWatch.ElapsedMilliseconds);

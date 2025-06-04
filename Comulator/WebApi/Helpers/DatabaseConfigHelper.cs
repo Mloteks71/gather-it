@@ -11,6 +11,6 @@ public static class DatabaseConfigHelper
         var password = dbConfig["Password"];
         var database = dbConfig["Database"];
 
-        return $"Host={server};Database={database};Username={userId};Password={password};";
+        return $"Host={server};Database={database};Username={userId};Password={password};Include Error Detail=true;";
     }
 }

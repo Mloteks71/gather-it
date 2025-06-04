@@ -25,9 +25,9 @@ public class Comulator : IComulator
         await Task.WhenAll(justJoinItJobs, solidJobsJobs);
 
         var result = new List<JobAdCreateDto>();
-        result.AddRange(justJoinItJobs.Result);
-        result.AddRange(solidJobsJobs.Result);
-        result.AddRange(theProtocolItJobs.Result);
+        result.AddRange(justJoinItJobs.Result.Chunk(50).First());
+        result.AddRange(solidJobsJobs.Result.Chunk(50).First());
+        result.AddRange(theProtocolItJobs.Result.Chunk(50).First());
 
         return result;
     }

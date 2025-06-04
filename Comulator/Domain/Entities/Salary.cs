@@ -3,6 +3,7 @@
 namespace Domain.Entities;
 public record Salary
 {
+    public Salary() { }
     public Salary(ContractType contractType, int salaryMin, int salaryMax)
     {
         ContractType = contractType;

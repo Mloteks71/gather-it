@@ -1,6 +1,10 @@
 ﻿namespace Application.Dtos.Api.Requests;
 public record AddDescriptionRequestDto
 {
-    public required int Id { get; init; }
-    public required string Description { get; init; }
+    public int Id { get; set; }
+    public string? Description { get; set; }
+    public string? Requirements { get; set; }
+    public string? Benefits { get; set; }
+    public string? Workstyle { get; set; }
+    public string? AboutProject { get; set; }
 }

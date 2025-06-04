@@ -1,5 +1,4 @@
-﻿
-using System.Collections.Frozen;
+﻿using Application.Dtos;
 using Application.Dtos.Api.Requests;
 using Application.Interfaces.Repositories.Write;
 using Microsoft.AspNetCore.Mvc;
@@ -18,10 +17,22 @@ public class JobAdController : BaseController
     }
 
     [HttpPost("Description")]
-    public async Task<ActionResult> GetJobAdDescription(List<AddDescriptionRequestDto> requestDto)
+    public async Task<ActionResult> PostJobAdDescription(List<AddDescriptionRequestDto> requestDto)
     {
-        await _writeJobAdRepository.AddDescription(requestDto.ToFrozenDictionary(x => x.Id, x => x.Description));
+        if (requestDto == null || requestDto.Count == 0)
+        {
+            return BadRequest("Request DTO cannot be null or empty.");
+        }
 
-        return NoContent();
+        Logger.LogInformation("Received {Count} job ad descriptions to add. xD", requestDto.Count);
+
+        if (requestDto.Any(x => x.Id <= 0))
+        {
+            return BadRequest("All job ad IDs must be greater than zero.");
+        }
+
+        await _writeJobAdRepository.AddDescription(requestDto.Select(x => new DescriptionCreateDto(x.Id, x.Description, x.Requirements, x.Benefits, x.Workstyle, x.AboutProject)));
+
+        return Created((string?)null, null);
     }
 }

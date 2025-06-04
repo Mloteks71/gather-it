@@ -10,11 +10,12 @@ import (
 
 	"gather.it/DescriptionService/internal/justJoinIt"
 	model "gather.it/DescriptionService/internal/sharedModel"
+	"gather.it/DescriptionService/internal/theProtocolIt"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func main() {
-	config := model.Config{
+	justJoinItConfig := model.Config{
 		SourceURL:    "https://justjoin.it/job-offer/",
 		TargetURL:    "http://webapi:8080/api/JobAd/Description",
 		RequestDelay: 250 * time.Millisecond,
@@ -23,6 +24,15 @@ func main() {
 		Headers: map[string]string{
 			"rsc": "1",
 		},
+	}
+
+	theProtocolItConfig := model.Config{
+		SourceURL:    "https://theprotocol.it/szczegoly/praca/",
+		TargetURL:    "http://webapi:8080/api/JobAd/Description",
+		RequestDelay: 600 * time.Millisecond,
+		MaxRetries:   3,
+		RetryDelay:   2 * time.Second,
+		Headers:      map[string]string{},
 	}
 
 	rabbitMQURL := os.Getenv("RABBITMQ_URL")
@@ -39,10 +49,11 @@ func main() {
 	}
 	defer ch.Close()
 
-	queueName := "JustJoinItDescription"
+	justJoinItQueueName := "JustJoinItDescription"
+	theProtocolItQueueName := "TheProtocolItDescription"
 
-	msgs, err := ch.Consume(
-		queueName,
+	justJoinItMsgs, err := ch.Consume(
+		justJoinItQueueName,
 		"JustJoinItDescriptionConsumer", // consumer tag
 		false,                           // auto-ack
 		false,                           // exclusive
@@ -54,13 +65,26 @@ func main() {
 		log.Fatalf("Failed to register a consumer: %v", err)
 	}
 
+	theProtocolItMsgs, err := ch.Consume(
+		theProtocolItQueueName,
+		"TheProtocolItDescriptionConsumer", // consumer tag
+		false,                              // auto-ack
+		false,                              // exclusive
+		false,                              // no-local
+		false,                              // no-wait
+		nil,                                // args
+	)
+	if err != nil {
+		log.Fatalf("Failed to register a consumer: %v", err)
+	}
+
 	stopChan := make(chan os.Signal, 1)
 	signal.Notify(stopChan, syscall.SIGINT, syscall.SIGTERM)
 
 	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
 
 	go func() {
-		for d := range msgs {
+		for d := range justJoinItMsgs {
 
 			var payload model.DescriptionInput
 			if err := json.Unmarshal(d.Body, &payload); err != nil {
@@ -68,7 +92,30 @@ func main() {
 				d.Nack(false, false)
 				continue
 			}
-			processor := justJoinIt.NewProcessor(config)
+			processor := justJoinIt.NewProcessor(justJoinItConfig)
+			if err := processor.ProcessItems(payload); err != nil {
+				log.Printf("Processing failed: %v", err)
+				d.Nack(false, true)
+				continue
+			}
+			log.Println("Processing completed successfully")
+
+			if err := d.Ack(false); err != nil {
+				log.Printf("Error acknowledging message: %v", err)
+			}
+		}
+	}()
+
+	go func() {
+		for d := range theProtocolItMsgs {
+
+			var payload model.DescriptionInput
+			if err := json.Unmarshal(d.Body, &payload); err != nil {
+				log.Printf("Error decoding JSON: %v", err)
+				d.Nack(false, false)
+				continue
+			}
+			processor := theProtocolIt.NewProcessor(theProtocolItConfig)
 			if err := processor.ProcessItems(payload); err != nil {
 				log.Printf("Processing failed: %v", err)
 				d.Nack(false, true)

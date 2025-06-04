@@ -10,7 +10,6 @@ public static class JobAdMapper
         return new JobAd
         {
             Name = jobAdCreateDto.Name,
-            Description = jobAdCreateDto.Description,
             RemoteType = jobAdCreateDto.RemoteType,
             RemotePercent = jobAdCreateDto.RemotePercent,
             Cities = jobAdCreateDto.Cities.ToList(),
