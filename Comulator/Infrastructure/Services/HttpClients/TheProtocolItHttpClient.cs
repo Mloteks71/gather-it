@@ -54,7 +54,7 @@ public class TheProtocolItHttpClient : BaseJobBoardHttpClient, ITheProtocolItHtt
         Dictionary<int, TheProtocolItResponse> pagesToMap = [];
         for (int x = 2; x <= _totalPages + 1; x++)
         {
-            await Task.Delay(200);
+            await Task.Delay(300);
             var content = await GetJobsAsync(new Uri($"{_uri}{x}"), true, requestContent);
             pagesToMap[x] = (await content.ReadFromJsonAsync<TheProtocolItResponse>())!;
         }

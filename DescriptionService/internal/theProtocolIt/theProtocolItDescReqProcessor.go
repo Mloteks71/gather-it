@@ -1,16 +1,16 @@
-package justJoinIt
+package theProtocolIt
 
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"regexp"
 	"strings"
 	"time"
+
+	"golang.org/x/net/html"
 
 	model "gather.it/DescriptionService/internal/sharedModel"
 )
@@ -37,13 +37,16 @@ func (p *Processor) ProcessItems(items []model.DescriptionInputItem) error {
 		if err != nil {
 			return fmt.Errorf("failed to make request for item %d: %v", item.Id, err)
 		}
-		cutDescription, err := p.processResponse(respBody, item.Slug)
-		if err != nil {
-			return fmt.Errorf("failed to process response for item %d: %v", item.Id, err)
-		}
+		requirements, project, benefits, workstyle, err := p.processResponse(respBody, item.Slug)
+		// if err != nil {
+		// 	return fmt.Errorf("failed to process response for item %d: %v", item.Id, err)
+		// }
 		p.output = append(p.output, model.DescriptionOutputItem{
-			Id:             item.Id,
-			CutDescription: cutDescription,
+			Id:           item.Id,
+			Requirements: requirements,
+			AboutProject: project,
+			Benefits:     benefits,
+			Workstyle:    workstyle,
 		})
 		if p.config.RequestDelay > 0 {
 			time.Sleep(p.config.RequestDelay)
@@ -113,48 +116,22 @@ func (p *Processor) makeRequest(item model.DescriptionInputItem) (string, error)
 	return respBody, nil
 }
 
-func (p *Processor) processResponse(body string, slug string) (string, error) {
-	startMarker := "OfferDetailsShell"
-	startPos := strings.Index(body, startMarker)
-	if startPos == -1 {
-		return "", errors.New("OfferDetailsShell not found in response")
-	}
+func (p *Processor) processResponse(body string, slug string) (string, string, string, string, error) {
+	parsedHtml, err := html.Parse(strings.NewReader(body))
 
-	startPos += len(startMarker)
-	if startPos >= len(body) {
-		return "", errors.New("start position exceeds response length")
-	}
+	requirementsNode := FindElementByID(parsedHtml, "REQUIREMENTS")
+	requirementsPart := GetTextContent(requirementsNode)
 
-	trueStartPos := strings.Index(body[startPos:], "<")
-	trueStartPos += startPos
+	projectNode := FindElementByID(parsedHtml, "PROJECT")
+	projectPart := GetTextContent(projectNode)
 
-	endMarker := `"label":`
-	endPos := strings.Index(body[trueStartPos:], endMarker)
-	if endPos == -1 {
-		log.Printf("label marker not found after OfferDetailsShell for %s", slug)
-		return "", errors.New("label marker not found after OfferDetailsShell")
-	}
+	benefitsNode := FindElementByID(parsedHtml, "PROGRESS_AND_BENEFITS")
+	benefitsPart := GetTextContent(benefitsNode)
 
-	cutDescription := body[trueStartPos : trueStartPos+endPos-4]
+	workstyleNode := FindElementByID(parsedHtml, "WORKSTYLE")
+	workstylePart := GetTextContent(workstyleNode)
 
-	cleaned := p.cleanHTML(cutDescription)
-
-	return strings.TrimSpace(cleaned), nil
-}
-
-func (p *Processor) cleanHTML(input string) string {
-	reBr := regexp.MustCompile(`(?i)<br\s*/?>`)
-	withNewlines := reBr.ReplaceAllString(input, "\n")
-
-	reTags := regexp.MustCompile(`(?i)<[^>]*>`)
-	cleaned := reTags.ReplaceAllString(withNewlines, "")
-
-	reSpaces := regexp.MustCompile(`\s+`)
-	cleaned = reSpaces.ReplaceAllString(cleaned, " ")
-
-	cleaned = strings.TrimSpace(cleaned)
-
-	return cleaned
+	return requirementsPart, benefitsPart, workstylePart, projectPart, err
 }
 
 func (p *Processor) sendBatch() error {
@@ -207,4 +184,42 @@ func (p *Processor) sendBatch() error {
 	}
 
 	return lastErr
+}
+
+func FindElementByID(n *html.Node, id string) *html.Node {
+	if n.Type == html.ElementNode {
+		for _, attr := range n.Attr {
+			if attr.Key == "id" && attr.Val == id {
+				return n
+			}
+		}
+	}
+
+	// Recursively search child nodes
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		if result := FindElementByID(c, id); result != nil {
+			return result
+		}
+	}
+
+	return nil
+}
+
+func GetTextContent(n *html.Node) string {
+	if n == nil {
+		return ""
+	}
+
+	var buf strings.Builder
+	var f func(*html.Node)
+	f = func(n *html.Node) {
+		if n.Type == html.TextNode {
+			buf.WriteString(n.Data)
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			f(c)
+		}
+	}
+	f(n)
+	return buf.String()
 }

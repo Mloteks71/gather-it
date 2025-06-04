@@ -23,4 +23,8 @@ type DescriptionInput []DescriptionInputItem
 type DescriptionOutputItem struct {
 	Id             int    `json:"Id"`
 	CutDescription string `json:"Description"`
+	Requirements   string `json:"Requirements"`
+	Benefits       string `json:"Benefits"`
+	Workstyle      string `json:"Workstyle"`
+	AboutProject   string `json:"AboutProject"`
 }

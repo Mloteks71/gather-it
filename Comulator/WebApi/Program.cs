@@ -38,8 +38,8 @@ builder.Services.AddDbContext<GatherItDbContext>(options =>
 
 builder.Services.AddScoped<IWriteJobAdRepository, WriteJobRepository>();
 builder.Services.AddScoped<IReadJobAdRepository, ReadJobRepository>();
-builder.Services.AddScoped<ICompanyNameRepository, CompanyNameRepository>();
-builder.Services.AddScoped<ICityRepository, CityRepository>();
+builder.Services.AddScoped<IReadCompanyNameRepository, ReadCompanyNameRepository>();
+builder.Services.AddScoped<IReadCityRepository, ReadCityRepository>();
 
 builder.Services.AddScoped<IDocumentSimilarityService, DocumentSimilarityService>();
 builder.Services.AddScoped<IJobAdService, JobAdService>();

@@ -24,13 +24,13 @@ public class DescriptionServiceMessageSender : IDescriptionServiceMessageSender
         Logger = logger;
     }
 
-    public virtual async Task SendDescriptionRequestList(ILookup<Site, DescriptionRequestDto> descriptionRequestDtoLookup)
+    public async Task SendDescriptionRequestList(ILookup<Site, DescriptionRequestDto> descriptionRequestDtoLookup)
     {
         foreach (IGrouping<Site, DescriptionRequestDto> descriptionRequestDtoList in descriptionRequestDtoLookup)
         {
-            if (descriptionRequestDtoList.Key != Site.JustJoinIt)
+            if (descriptionRequestDtoList.Key == Site.SolidJobs)
             {
-                return;
+                continue;
             }
 
             var routingKey = _routingKeys[descriptionRequestDtoList.Key];

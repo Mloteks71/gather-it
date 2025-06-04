@@ -1,11 +1,10 @@
-﻿using System.Collections.Frozen;
+﻿using System.Diagnostics;
 using Application.Dtos;
 using Application.Interfaces.Repositories.Write;
 using Domain;
 using Domain.Entities;
 using EFCore.BulkExtensions;
 using Infrastructure.Mappers;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Repositories.Write;
@@ -19,30 +18,19 @@ public class WriteJobRepository : IWriteJobAdRepository
         _logger = logger;
     }
 
-    public async Task AddDescription(FrozenDictionary<int, string> descriptions)
+    public async Task AddDescription(IEnumerable<DescriptionCreateDto> descriptions)
     {
-        var entitiesToUpdate = await _context.JobAds
-        .Where(jobAd => descriptions.Keys.Contains(jobAd.Id))
-        .AsTracking()
-        .ToListAsync();
-
-        foreach (var entity in entitiesToUpdate)
-        {
-            if (descriptions.TryGetValue(entity.Id, out var newDescription))
-            {
-                entity.Description = newDescription;
-            }
-        }
-
-        _context.UpdateRange(entitiesToUpdate);
-
+        await _context.BulkInsertAsync(descriptions.Select(x => new Description(x.Id, x.Description, x.Requirements, x.Benefits, x.Workstyle, x.AboutProject)), new BulkConfig { SetOutputIdentity = true });
+        _logger.LogInformation("Added {Count} descriptions to the database.", descriptions.Count());
         await _context.SaveChangesAsync();
     }
 
     public async Task<List<JobAd>> InsertJobAds(IEnumerable<JobAdCreateDto> jobAdCreateDtos, bool doBulkInsert = false)
     {
-        var jobAds = jobAdCreateDtos.Select(x => x.ToEntity()).ToList();
-        jobAds = jobAds.Where(x => x.Site == Domain.Enums.Site.JustJoinIt).Chunk(50).First().ToList();
+        var stopwatch = new Stopwatch();
+        stopwatch.Start();
+        var jobAds = jobAdCreateDtos.Select(x => x.ToEntity()).ToList(); // ToList is required to get Ids from db on insert
+
         if (doBulkInsert)
         {
             var batches = jobAds.Chunk(500);
@@ -50,17 +38,20 @@ public class WriteJobRepository : IWriteJobAdRepository
             foreach (var batch in batches)
             {
                 await _context.BulkInsertAsync(batch, new BulkConfig { SetOutputIdentity = true });
-                _logger.LogInformation($"Batch Id = {batch[1].Id}");
             }
 
             await _context.SaveChangesAsync();
-            return jobAds.ToList();
+        }
+        else
+        {
+            await _context.JobAds.AddRangeAsync(jobAds);
+            await _context.SaveChangesAsync();
         }
 
-        await _context.JobAds.AddRangeAsync(jobAds);
-        await _context.SaveChangesAsync();
-        var jobAdsList = jobAds.ToList();
-        _logger.LogInformation($"No batch Id = {jobAdsList.FirstOrDefault()?.Id}");
+        stopwatch.Stop();
+        var elapsedMilliseconds = stopwatch.ElapsedMilliseconds;
+
+        _logger.LogInformation($"Time after time:{elapsedMilliseconds} bulk?: {doBulkInsert}");
         return jobAds.ToList();
     }
 }

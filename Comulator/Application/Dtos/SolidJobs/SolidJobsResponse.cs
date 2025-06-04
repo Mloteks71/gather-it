@@ -6,6 +6,68 @@ namespace Application.Dtos.SolidJobs;
 
 public class SolidJobsResponse
 {
+    public static IEnumerable<JobAdCreateDto> GenerateJobAdCreateDtos(IEnumerable<SolidJobsResponse> solidJobsResponses)
+    {
+        return solidJobsResponses
+            .Select(x => new JobAdCreateDto(
+                name: x.JobTitle,
+                description: string.Empty,
+                remoteType: MapToRemoteType(x.RemotePossible),
+                remotePercent: null,
+                cities: new List<City> { new(x.CompanyCity) },
+                salaries: new List<Salary> { new (MapToContractType
+                (
+                    x.Salary.EmploymentType),
+                    Convert.ToInt32(x.Salary.LowerBound),
+                    Convert.ToInt32(x.Salary.UpperBound))
+                },
+                companyNameId: 0,
+                companyName: new CompanyName(x.CompanyName),
+                slug: $"{x.Id}/{x.JobOfferKey}",
+                site: Site.SolidJobs
+            ));
+    }
+
+    private static RemoteType MapToRemoteType(string type)
+    {
+        var result = RemoteType.None;
+
+        if (RemoteTypeMap.TryGetValue(type, out var flag))
+        {
+            result |= flag;
+        }
+
+        return result;
+    }
+
+    private static readonly Dictionary<string, RemoteType> RemoteTypeMap = new(StringComparer.OrdinalIgnoreCase)
+    {
+        { "Możliwa w całości", RemoteType.Remote },
+        { "W całości", RemoteType.Remote },
+        { "Brak", RemoteType.Stationary },
+        { "Możliwa częściowo", RemoteType.Hybrid }
+    };
+
+    private static readonly Dictionary<string, ContractType> ContractTypeMap = new(StringComparer.OrdinalIgnoreCase)
+    {
+        { "Umowa o pracę", ContractType.UoP },
+        { "B2B", ContractType.B2B },
+        { "Umowa zlecenie", ContractType.UZ },
+        { "Umowa o dzieło", ContractType.Contract },
+        { "Umowa o praktykę", ContractType.Internship },
+        { "Umowa o staż", ContractType.Internship }
+    };
+
+    private static ContractType MapToContractType(string input)
+    {
+        if (ContractTypeMap.TryGetValue(input, out var result))
+        {
+            return result;
+        }
+        throw new ArgumentException($"No enum value mapped to string: {input}");
+    }
+
+    #region classes
     [JsonPropertyName("id")]
     public int Id { get; set; }
 
@@ -113,66 +175,6 @@ public class SolidJobsResponse
         [JsonPropertyName("skillLevel")]
         public string SkillLevel { get; set; }
     }
-
-    public static IEnumerable<JobAdCreateDto> GenerateJobAdCreateDtos(IEnumerable<SolidJobsResponse> solidJobsResponses)
-    {
-        return solidJobsResponses
-            .Select(x => new JobAdCreateDto(
-                name: x.JobTitle,
-                description: string.Empty,
-                remoteType: MapToRemoteType(x.RemotePossible),
-                remotePercent: null,
-                cities: new List<City> { new(x.CompanyCity) },
-                salaries: new List<Salary> { new (MapToContractType
-                (
-                    x.Salary.EmploymentType),
-                    Convert.ToInt32(x.Salary.LowerBound),
-                    Convert.ToInt32(x.Salary.UpperBound))
-                },
-                companyNameId: 0,
-                companyName: new CompanyName(x.CompanyName),
-                slug: $"{x.Id}/{x.JobOfferKey}",
-                site: Site.SolidJobs
-            ));
-    }
-
-    private static RemoteType MapToRemoteType(string type)
-    {
-        var result = RemoteType.None;
-
-        if (RemoteTypeMap.TryGetValue(type, out var flag))
-        {
-            result |= flag;
-        }
-
-        return result;
-    }
-
-    private static readonly Dictionary<string, RemoteType> RemoteTypeMap = new(StringComparer.OrdinalIgnoreCase)
-    {
-        { "Możliwa w całości", RemoteType.Remote },
-        { "W całości", RemoteType.Remote },
-        { "Brak", RemoteType.Stationary },
-        { "Możliwa częściowo", RemoteType.Hybrid }
-    };
-
-    private static readonly Dictionary<string, ContractType> ContractTypeMap = new(StringComparer.OrdinalIgnoreCase)
-    {
-        { "Umowa o pracę", ContractType.UoP },
-        { "B2B", ContractType.B2B },
-        { "Umowa zlecenie", ContractType.UZ },
-        { "Umowa o dzieło", ContractType.Contract },
-        { "Umowa o praktykę", ContractType.Internship },
-        { "Umowa o staż", ContractType.Internship }
-    };
-
-    private static ContractType MapToContractType(string input)
-    {
-        if (ContractTypeMap.TryGetValue(input, out var result))
-        {
-            return result;
-        }
-        throw new ArgumentException($"No enum value mapped to string: {input}");
-    }
+    #endregion
 }
 
