@@ -9,12 +9,6 @@ public class JobAdConfiguration : IEntityTypeConfiguration<JobAd>
         builder.HasKey(j => j.Id);
         builder.Property(j => j.Id).UseIdentityColumn().ValueGeneratedOnAdd();
 
-        builder.HasOne(j => j.Description)
-               .WithOne(d => d.JobAd)
-               .HasForeignKey<Description>(d => d.JobAdId)
-               .IsRequired(false)
-               .OnDelete(DeleteBehavior.Cascade);
-
         builder.HasOne(j => j.CompanyName)
                .WithOne(cn => cn.JobAd)
                .HasForeignKey<CompanyName>(cn => cn.JobAdId)
