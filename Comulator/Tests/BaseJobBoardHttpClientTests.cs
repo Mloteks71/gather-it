@@ -135,7 +135,7 @@ public class BaseJobBoardHttpClientTests
             .ReturnsAsync(expectedResponse);
 
         // Act & Assert
-        var exception = await Assert.ThrowsAsync<Exception>(() =>
+        var exception = await Assert.ThrowsAsync<HttpRequestException>(() =>
             _testClient.GetJobsAsync(expectedUri));
 
         Assert.Contains("NotFound", exception.Message);
