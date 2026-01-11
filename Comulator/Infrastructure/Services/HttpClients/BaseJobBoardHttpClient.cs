@@ -18,7 +18,11 @@ public abstract class BaseJobBoardHttpClient
 
         if (!response.IsSuccessStatusCode)
         {
-            throw new Exception(response.StatusCode + "  " + response.Content);
+            var content = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException(
+                $"HTTP request failed with status {response.StatusCode}: {content}",
+                null,
+                response.StatusCode);
         }
 
         return response.Content;
