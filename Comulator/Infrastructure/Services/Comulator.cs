@@ -22,7 +22,7 @@ public class Comulator : IComulator
         var solidJobsJobs = _solidJobsHttpClient.GetJobsAsync();
         var theProtocolItJobs = _theProtocolItHttpClient.GetJobsAsync();
 
-        await Task.WhenAll(justJoinItJobs, solidJobsJobs);
+        await Task.WhenAll(justJoinItJobs, solidJobsJobs, theProtocolItJobs);
 
         var result = new List<JobAdCreateDto>();
         result.AddRange(justJoinItJobs.Result.Chunk(50).First());
