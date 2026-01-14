@@ -16,7 +16,10 @@ public class SolidJobsHttpClient : BaseJobBoardHttpClient, ISolidJobsHttpClient
         IConfiguration config,
         ILogger<SolidJobsHttpClient> logger) : base(httpClient, logger)
     {
-        httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.solidjobs.jobofferlist+json, application/json, text/plain, */*");
+        if (!httpClient.DefaultRequestHeaders.Contains("Accept"))
+        {
+            httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.solidjobs.jobofferlist+json, application/json, text/plain, */*");
+        }
         _uri = new Uri(config["SolidJobs:Url"]!);
     }
 
@@ -28,7 +31,7 @@ public class SolidJobsHttpClient : BaseJobBoardHttpClient, ISolidJobsHttpClient
         var solidJobsResponse = await content.ReadFromJsonAsync<IEnumerable<SolidJobsResponse>>();
 
         if (solidJobsResponse is null)
-            throw new Exception("SolidJobs response empty.");
+            throw new InvalidOperationException("SolidJobs response empty.");
 
         var result = SolidJobsResponse.GenerateJobAdCreateDtos(solidJobsResponse).ToList();
 

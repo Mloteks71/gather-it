@@ -18,7 +18,10 @@ public class JustJoinItHttpClient : BaseJobBoardHttpClient, IJustJoinItHttpClien
         ILogger<JustJoinItHttpClient> logger) : base(httpClient, logger)
     {
         _uri = new Uri(config["JustJoinIt:Url"]!);
-        httpClient.DefaultRequestHeaders.Add("Version", "2");
+        if (!httpClient.DefaultRequestHeaders.Contains("Version"))
+        {
+            httpClient.DefaultRequestHeaders.Add("Version", "2");
+        }
     }
 
     public async Task<IEnumerable<JobAdCreateDto>> GetJobsAsync()
@@ -31,7 +34,7 @@ public class JustJoinItHttpClient : BaseJobBoardHttpClient, IJustJoinItHttpClien
         var justJoinItResponse = await content.ReadFromJsonAsync<JustJoinItResponse>();
 
         if (justJoinItResponse is null)
-            throw new Exception("JustJoinIt response empty.");
+            throw new InvalidOperationException("JustJoinIt response empty.");
 
         if (justJoinItResponse.Jobs.Count == 0)
             return result;
@@ -46,9 +49,11 @@ public class JustJoinItHttpClient : BaseJobBoardHttpClient, IJustJoinItHttpClien
 
         await Task.WhenAll(pagesToFetch.Values);
 
-        var pagesToMap = Enumerable
-            .Range(2, _totalPages - 1)
-            .ToDictionary(x => x, x => pagesToFetch[x].Result.ReadFromJsonAsync<JustJoinItResponse>());
+        var pagesToMap = new Dictionary<int, Task<JustJoinItResponse?>>();
+        foreach (var kvp in pagesToFetch)
+        {
+            pagesToMap[kvp.Key] = kvp.Value.ReadFromJsonAsync<JustJoinItResponse>();
+        }
 
         await Task.WhenAll(pagesToMap.Values);
 
