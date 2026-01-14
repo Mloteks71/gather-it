@@ -42,7 +42,7 @@ public class TheProtocolItHttpClient : BaseJobBoardHttpClient, ITheProtocolItHtt
         var theProtocolItResponse = await responseContent.ReadFromJsonAsync<TheProtocolItResponse>();
 
         if (theProtocolItResponse is null)
-            throw new Exception("JustJoinIt response empty.");
+            throw new InvalidOperationException("TheProtocolIt response empty.");
 
         if (theProtocolItResponse.Offers.Count == 0)
             return result;

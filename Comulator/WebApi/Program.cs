@@ -72,10 +72,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseSerilogRequestLogging();
 
-await using (var serviceScope = app.Services.CreateAsyncScope())
-await using (var dbContext = serviceScope.ServiceProvider.GetRequiredService<GatherItDbContext>())
+using (var serviceScope = app.Services.CreateAsyncScope())
 {
-    dbContext.Database.Migrate();
+    var dbContext = serviceScope.ServiceProvider.GetRequiredService<GatherItDbContext>();
+    await dbContext.Database.MigrateAsync();
 }
 
 if (!app.Environment.IsDevelopment())
