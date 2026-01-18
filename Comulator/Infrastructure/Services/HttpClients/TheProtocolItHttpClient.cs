@@ -44,17 +44,21 @@ public class TheProtocolItHttpClient : BaseJobBoardHttpClient, ITheProtocolItHtt
 
         result.AddRange(theProtocolItResponse.GenerateJobAdCreateDtos());
 
-        Dictionary<int, TheProtocolItResponse> pagesToMap = [];
-        for (int x = 2; x <= _totalPages + 1; x++)
-        {
-            await Task.Delay(300);
-            var content = await GetJobsAsync(new Uri($"{_uri}{x}"), true, requestContent);
-            pagesToMap[x] = (await content.ReadFromJsonAsync<TheProtocolItResponse>())!;
-        }
+        var pagesToFetch = Enumerable
+            .Range(2, _totalPages)
+            .Select(async pageNumber =>
+            {
+                await Task.Delay(300);
+                var content = await GetJobsAsync(new Uri($"{_uri}{pageNumber}"), true, requestContent);
+                return await content.ReadFromJsonAsync<TheProtocolItResponse>();
+            })
+            .ToList();
 
-        var dataToAdd = pagesToMap
-            .Where(x => x.Value is not null)
-            .SelectMany(x => x.Value!.GenerateJobAdCreateDtos());
+        var responses = await Task.WhenAll(pagesToFetch);
+
+        var dataToAdd = responses
+            .Where(x => x is not null)
+            .SelectMany(x => x!.GenerateJobAdCreateDtos());
 
         result.AddRange(dataToAdd);
 
