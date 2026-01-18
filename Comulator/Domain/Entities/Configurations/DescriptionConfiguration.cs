@@ -13,6 +13,9 @@ public class DescriptionConfiguration : IEntityTypeConfiguration<Description>
         builder.Property(d => d.JobAdId)
             .ValueGeneratedNever();
 
+        // Ignore computed property
+        builder.Ignore(d => d.DescriptionBlock);
+
         // Explicitly configure the foreign key relationship
         builder.HasOne(d => d.JobAd)
             .WithOne(j => j.Description)
