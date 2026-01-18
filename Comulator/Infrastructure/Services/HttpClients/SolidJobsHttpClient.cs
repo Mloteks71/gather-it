@@ -27,9 +27,16 @@ public class SolidJobsHttpClient : BaseJobBoardHttpClient, ISolidJobsHttpClient
         var solidJobsResponse = await content.ReadFromJsonAsync<IEnumerable<SolidJobsResponse>>();
 
         if (solidJobsResponse is null)
-            throw new InvalidOperationException("SolidJobs response empty.");
+            throw new InvalidOperationException("SolidJobs API returned null response. The API may be unavailable or the response format has changed.");
 
-        var result = SolidJobsResponse.GenerateJobAdCreateDtos(solidJobsResponse).ToList();
+        var responseList = solidJobsResponse.ToList();
+        if (responseList.Count == 0)
+        {
+            Logger.LogWarning("SolidJobs returned no job postings.");
+            return new List<JobAdCreateDto>();
+        }
+
+        var result = SolidJobsResponse.GenerateJobAdCreateDtos(responseList).ToList();
 
         stopwatch.Stop();
         var elapsedMilliseconds = stopwatch.ElapsedMilliseconds;

@@ -32,10 +32,13 @@ public class TheProtocolItHttpClient : BaseJobBoardHttpClient, ITheProtocolItHtt
         var theProtocolItResponse = await responseContent.ReadFromJsonAsync<TheProtocolItResponse>();
 
         if (theProtocolItResponse is null)
-            throw new InvalidOperationException("TheProtocolIt response empty.");
+            throw new InvalidOperationException("TheProtocolIt API returned null response. The API may be unavailable or the response format has changed.");
 
-        if (theProtocolItResponse.Offers.Count == 0)
+        if (theProtocolItResponse.Offers is null || theProtocolItResponse.Offers.Count == 0)
+        {
+            Logger.LogWarning("TheProtocolIt returned no job postings.");
             return result;
+        }
 
         _totalPages = theProtocolItResponse.Page.Count;
 
