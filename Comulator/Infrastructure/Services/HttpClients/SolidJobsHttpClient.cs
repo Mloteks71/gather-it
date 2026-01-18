@@ -16,10 +16,6 @@ public class SolidJobsHttpClient : BaseJobBoardHttpClient, ISolidJobsHttpClient
         IConfiguration config,
         ILogger<SolidJobsHttpClient> logger) : base(httpClient, logger)
     {
-        if (!httpClient.DefaultRequestHeaders.Contains("Accept"))
-        {
-            httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.solidjobs.jobofferlist+json, application/json, text/plain, */*");
-        }
         _uri = new Uri(config["SolidJobs:Url"]!);
     }
 
