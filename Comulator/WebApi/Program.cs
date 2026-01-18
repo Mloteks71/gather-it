@@ -46,9 +46,25 @@ builder.Services.AddScoped<IJobAdService, JobAdService>();
 builder.Services.AddScoped<IComulator, Comulator>();
 builder.Services.AddScoped<IDescriptionServiceMessageSender, DescriptionServiceMessageSender>();
 
-builder.Services.AddHttpClient<IJustJoinItHttpClient, JustJoinItHttpClient>();
-builder.Services.AddHttpClient<ITheProtocolItHttpClient, TheProtocolItHttpClient>();
-builder.Services.AddHttpClient<ISolidJobsHttpClient, SolidJobsHttpClient>();
+builder.Services.AddHttpClient<IJustJoinItHttpClient, JustJoinItHttpClient>(client =>
+{
+    client.DefaultRequestHeaders.Add("Version", "2");
+});
+builder.Services.AddHttpClient<ITheProtocolItHttpClient, TheProtocolItHttpClient>(client =>
+{
+    var headers = configuration.GetSection("TheProtocolIt:HttpHeaders")
+                            .GetChildren()
+                            .ToDictionary(x => x.Key, x => x.Value);
+
+    foreach (var header in headers)
+    {
+        client.DefaultRequestHeaders.TryAddWithoutValidation(header.Key, header.Value);
+    }
+});
+builder.Services.AddHttpClient<ISolidJobsHttpClient, SolidJobsHttpClient>(client =>
+{
+    client.DefaultRequestHeaders.Add("Accept", "application/vnd.solidjobs.jobofferlist+json, application/json, text/plain, */*");
+});
 
 var rabbitSection = configuration.GetSection("RabbitMQ");
 var rabbitMQConfiguration = new RabbitMqServiceOptions
