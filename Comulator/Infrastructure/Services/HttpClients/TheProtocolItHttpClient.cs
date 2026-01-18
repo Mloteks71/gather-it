@@ -13,22 +13,12 @@ public class TheProtocolItHttpClient : BaseJobBoardHttpClient, ITheProtocolItHtt
 {
     private readonly Uri _uri;
     private int _totalPages = 1;
-    private Dictionary<string, string?> _headers;
     public TheProtocolItHttpClient(
         HttpClient httpClient,
         IConfiguration config,
         ILogger<TheProtocolItResponse> logger) : base(httpClient, logger)
     {
         _uri = new Uri(config["TheProtocolIt:Url"]!);
-        var headers = config.GetSection("TheProtocolIt:HttpHeaders")
-                            .GetChildren()
-                            .ToDictionary(x => x.Key, x => x.Value);
-
-        foreach (var header in headers)
-        {
-            httpClient.DefaultRequestHeaders.TryAddWithoutValidation(header.Key, header.Value);
-        }
-        _headers = headers;
     }
 
     public async Task<IEnumerable<JobAdCreateDto>> GetJobsAsync()

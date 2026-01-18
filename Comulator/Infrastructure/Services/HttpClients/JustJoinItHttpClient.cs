@@ -18,10 +18,6 @@ public class JustJoinItHttpClient : BaseJobBoardHttpClient, IJustJoinItHttpClien
         ILogger<JustJoinItHttpClient> logger) : base(httpClient, logger)
     {
         _uri = new Uri(config["JustJoinIt:Url"]!);
-        if (!httpClient.DefaultRequestHeaders.Contains("Version"))
-        {
-            httpClient.DefaultRequestHeaders.Add("Version", "2");
-        }
     }
 
     public async Task<IEnumerable<JobAdCreateDto>> GetJobsAsync()
@@ -45,21 +41,19 @@ public class JustJoinItHttpClient : BaseJobBoardHttpClient, IJustJoinItHttpClien
 
         var pagesToFetch = Enumerable
             .Range(2, _totalPages - 1)
-            .ToDictionary(x => x, x => GetJobsAsync(new Uri($"{_uri}{x}")));
+            .Select(x => GetJobsAsync(new Uri($"{_uri}{x}")))
+            .ToList();
 
-        await Task.WhenAll(pagesToFetch.Values);
+        var pageContents = await Task.WhenAll(pagesToFetch);
 
-        var pagesToMap = new Dictionary<int, Task<JustJoinItResponse?>>();
-        foreach (var kvp in pagesToFetch)
-        {
-            pagesToMap[kvp.Key] = kvp.Value.ReadFromJsonAsync<JustJoinItResponse>();
-        }
+        var deserializationTasks = pageContents
+            .Select(content => content.ReadFromJsonAsync<JustJoinItResponse>());
 
-        await Task.WhenAll(pagesToMap.Values);
+        var responses = await Task.WhenAll(deserializationTasks);
 
-        var dataToAdd = pagesToMap
-            .Where(x => x.Value.Result is not null)
-            .SelectMany(x => x.Value.Result!.GenerateJobAdCreateDtos());
+        var dataToAdd = responses
+            .Where(response => response is not null)
+            .SelectMany(response => response!.GenerateJobAdCreateDtos());
 
         result.AddRange(dataToAdd);
 
