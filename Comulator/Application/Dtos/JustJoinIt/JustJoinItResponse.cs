@@ -83,7 +83,7 @@ public class JustJoinItResponse
         {
             return result;
         }
-        throw new ArgumentException($"No enum value mapped to string: {input}");
+        throw new ArgumentException($"Unknown contract type '{input}' from JustJoinIt. Expected one of: {string.Join(", ", ContractTypeMap.Keys)}", nameof(input));
     }
 
     private static readonly Dictionary<string, RemoteType> RemoteTypeMap = new(StringComparer.OrdinalIgnoreCase)

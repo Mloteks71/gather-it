@@ -64,7 +64,7 @@ public class SolidJobsResponse
         {
             return result;
         }
-        throw new ArgumentException($"No enum value mapped to string: {input}");
+        throw new ArgumentException($"Unknown contract type '{input}' from SolidJobs. Expected one of: {string.Join(", ", ContractTypeMap.Keys)}", nameof(input));
     }
 
     #region classes

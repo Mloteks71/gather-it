@@ -30,10 +30,13 @@ public class JustJoinItHttpClient : BaseJobBoardHttpClient, IJustJoinItHttpClien
         var justJoinItResponse = await content.ReadFromJsonAsync<JustJoinItResponse>();
 
         if (justJoinItResponse is null)
-            throw new InvalidOperationException("JustJoinIt response empty.");
+            throw new InvalidOperationException("JustJoinIt API returned null response. The API may be unavailable or the response format has changed.");
 
-        if (justJoinItResponse.Jobs.Count == 0)
+        if (justJoinItResponse.Jobs is null || justJoinItResponse.Jobs.Count == 0)
+        {
+            Logger.LogWarning("JustJoinIt returned no job postings.");
             return result;
+        }
 
         _totalPages = justJoinItResponse.MetaData.TotalPages;
 

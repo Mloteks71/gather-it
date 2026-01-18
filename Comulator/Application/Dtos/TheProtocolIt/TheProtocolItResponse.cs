@@ -96,7 +96,7 @@ public class TheProtocolItResponse
             return result;
         }
 
-        throw new ArgumentException($"No enum value mapped to string: {input}");
+        throw new ArgumentException($"Unknown contract type ID '{input}' from TheProtocolIt. Expected one of: {string.Join(", ", ContractTypeMap.Keys)}", nameof(input));
     }
 
     private static readonly Dictionary<string, RemoteType> RemoteTypeMap = new(StringComparer.OrdinalIgnoreCase)
