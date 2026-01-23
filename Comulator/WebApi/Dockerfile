@@ -28,4 +28,4 @@ RUN dotnet publish "./WebApi.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["./wait-for-it.sh", "rabbitmq", "5672", "--", "dotnet", "WebApi.dll"]
+ENTRYPOINT ["sh", "-c", "wait-for-it.sh postgres 5432 -- wait-for-it.sh rabbitmq 5672 -- dotnet WebApi.dll"]
