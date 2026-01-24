@@ -22,17 +22,16 @@ public class WriteJobRepository : IWriteJobAdRepository
     public async Task AddDescription(IEnumerable<DescriptionCreateDto> descriptions)
     {
         var descriptionList = descriptions.ToList();
-        
-        // Validate that all JobAd IDs exist in the database
-        var jobAdIds = descriptionList.Select(d => d.Id).ToList();
-        var existingJobAdIds = await _context.JobAds
-            .Where(ja => jobAdIds.Contains(ja.Id))
-            .Select(ja => ja.Id)
-            .ToListAsync();
 
-        var missingIds = jobAdIds.Except(existingJobAdIds).ToList();
-        if (missingIds.Any())
+        // Validate that all JobAd IDs exist in the database
+        //var jobAdIds = descriptionList.Select(d => d.Id).ToList();
+        var existingJobAds = await _context.JobAds
+            .Where(ja => descriptions.FirstOrDefault(x => x.Id == ja.Id) != null).ToListAsync();
+
+        if (existingJobAds.Count != descriptionList.Count)
         {
+            var missingIds = descriptionList.Select(x => x.Id).Except(existingJobAds.Select(x => x.Id)).ToList();
+
             throw new InvalidOperationException(
                 $"Cannot add descriptions for non-existent JobAds. Missing IDs: {string.Join(", ", missingIds)}");
         }
