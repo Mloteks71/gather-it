@@ -44,8 +44,7 @@ public class JustJoinItHttpClient : BaseJobBoardHttpClient, IJustJoinItHttpClien
 
         var pagesToFetch = Enumerable
             .Range(2, _totalPages - 1)
-            .Select(x => GetJobsAsync(new Uri($"{_uri}{x}")))
-            .ToList();
+            .Select(x => GetJobsAsync(new Uri($"{_uri}{x}")));
 
         var pageContents = await Task.WhenAll(pagesToFetch);
 

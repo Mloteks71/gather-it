@@ -1,6 +1,7 @@
 ﻿using Application.Dtos;
 using Application.Interfaces;
 using Application.Interfaces.HttpClients;
+using Domain.Entities;
 
 namespace Infrastructure.Services;
 public class Comulator : IComulator
@@ -24,11 +25,6 @@ public class Comulator : IComulator
 
         var results = await Task.WhenAll(justJoinItJobs, solidJobsJobs, theProtocolItJobs);
 
-        var result = new List<JobAdCreateDto>();
-        result.AddRange(results[0]);
-        result.AddRange(results[1]);
-        result.AddRange(results[2]);
-
-        return result;
+        return results.SelectMany(x => x);
     }
 }

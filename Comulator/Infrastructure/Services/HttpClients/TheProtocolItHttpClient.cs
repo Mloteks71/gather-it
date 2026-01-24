@@ -51,8 +51,7 @@ public class TheProtocolItHttpClient : BaseJobBoardHttpClient, ITheProtocolItHtt
                 await Task.Delay(300);
                 var content = await GetJobsAsync(new Uri($"{_uri}{pageNumber}"), true, requestContent);
                 return await content.ReadFromJsonAsync<TheProtocolItResponse>();
-            })
-            .ToList();
+            });
 
         var responses = await Task.WhenAll(pagesToFetch);
 
