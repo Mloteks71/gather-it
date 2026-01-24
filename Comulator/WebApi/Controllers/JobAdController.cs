@@ -38,7 +38,8 @@ public class JobAdController : BaseController
             await _writeJobAdRepository.AddDescription(
                 requestDto.Select(x => new DescriptionCreateDto(x.Id, x.Description, x.Requirements, x.Benefits, x.Workstyle, x.AboutProject)));
 
-            var response = new {
+            var response = new
+            {
                 message = $"Successfully added {requestDto.Count} job ad descriptions.",
                 count = requestDto.Count
             };

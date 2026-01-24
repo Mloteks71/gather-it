@@ -4,6 +4,7 @@ using Domain.Entities;
 using Domain.Enums;
 
 namespace Application.Dtos.JustJoinIt;
+
 public class JustJoinItResponse
 {
     [JsonPropertyName("data")]

@@ -9,6 +9,7 @@ using Moq;
 using Moq.Protected;
 
 namespace Tests;
+
 public class JustJoinItHttpClientTests
 {
     private const string BaseUrl = "https://api.justjoin.it/";

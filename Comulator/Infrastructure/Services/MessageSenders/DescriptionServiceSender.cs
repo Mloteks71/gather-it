@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using RabbitMQ.Client.Core.DependencyInjection.Services.Interfaces;
 
 namespace Infrastructure.Services.MessageSenders;
+
 public class DescriptionServiceMessageSender : IDescriptionServiceMessageSender
 {
     private readonly Dictionary<Site, string> _routingKeys;

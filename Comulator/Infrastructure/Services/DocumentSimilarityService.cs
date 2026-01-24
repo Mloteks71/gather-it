@@ -5,6 +5,7 @@ using Microsoft.ML;
 using Microsoft.ML.Transforms.Text;
 
 namespace Infrastructure.Services;
+
 public class DocumentSimilarityService : IDocumentSimilarityService
 {
     private readonly MLContext _mlContext;

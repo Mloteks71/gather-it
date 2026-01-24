@@ -3,6 +3,7 @@ using Domain.Enums;
 using static Application.Dtos.JustJoinIt.JustJoinItResponse;
 
 namespace Tests.Fixtures;
+
 public class JustJoinItFixture
 {
     public JustJoinItResponse CreateValidResponse(int page = 1, int totalPages = 1, List<JustJoinItJob>? jobs = null)

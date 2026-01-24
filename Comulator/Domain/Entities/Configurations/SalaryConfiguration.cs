@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Domain.Entities.Configurations;
+
 public class SalaryConfiguration : IEntityTypeConfiguration<Salary>
 {
     public void Configure(EntityTypeBuilder<Salary> builder)
