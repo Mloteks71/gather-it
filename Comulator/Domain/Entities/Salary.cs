@@ -1,6 +1,7 @@
 ﻿using Domain.Enums;
 
 namespace Domain.Entities;
+
 public record Salary
 {
     public Salary() { }

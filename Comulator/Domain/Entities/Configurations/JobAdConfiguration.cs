@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Domain.Entities.Configurations;
+
 public class JobAdConfiguration : IEntityTypeConfiguration<JobAd>
 {
     public void Configure(EntityTypeBuilder<JobAd> builder)

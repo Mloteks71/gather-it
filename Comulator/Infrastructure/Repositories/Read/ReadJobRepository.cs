@@ -3,6 +3,7 @@ using Domain;
 using Domain.Entities;
 
 namespace Infrastructure.Repositories.Read;
+
 public class ReadJobRepository : IReadJobAdRepository
 {
     private readonly GatherItDbContext _context;

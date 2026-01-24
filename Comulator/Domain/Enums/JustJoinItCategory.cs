@@ -1,4 +1,5 @@
 ﻿namespace Domain.Enums;
+
 public enum JustJoinItCategory
 {
     JS = 1,

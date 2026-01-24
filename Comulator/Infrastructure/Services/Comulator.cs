@@ -4,6 +4,7 @@ using Application.Interfaces.HttpClients;
 using Domain.Entities;
 
 namespace Infrastructure.Services;
+
 public class Comulator : IComulator
 {
     private readonly IJustJoinItHttpClient _justJoinItHttpClient;

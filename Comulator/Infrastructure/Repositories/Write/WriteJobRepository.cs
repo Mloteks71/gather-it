@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Repositories.Write;
+
 public class WriteJobRepository : IWriteJobAdRepository
 {
     private readonly GatherItDbContext _context;
@@ -37,7 +38,7 @@ public class WriteJobRepository : IWriteJobAdRepository
         }
 
         await _context.BulkInsertAsync(
-            descriptionList.Select(x => new Description(x.Id, x.Description, x.Requirements, x.Benefits, x.Workstyle, x.AboutProject)), 
+            descriptionList.Select(x => new Description(x.Id, x.Description, x.Requirements, x.Benefits, x.Workstyle, x.AboutProject)),
             new BulkConfig { SetOutputIdentity = true });
         _logger.LogInformation("Added {Count} descriptions to the database.", descriptionList.Count);
         await _context.SaveChangesAsync();

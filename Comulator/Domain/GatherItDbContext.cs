@@ -3,6 +3,7 @@ using Domain.Entities.Configurations;
 using Microsoft.EntityFrameworkCore;
 
 namespace Domain;
+
 public class GatherItDbContext : DbContext
 {
     public GatherItDbContext(DbContextOptions<GatherItDbContext> options) : base(options)

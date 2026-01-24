@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Services.HttpClients;
+
 public abstract class BaseJobBoardHttpClient
 {
     private readonly HttpClient _httpClient;

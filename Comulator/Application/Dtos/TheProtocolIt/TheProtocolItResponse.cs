@@ -4,6 +4,7 @@ using Domain.Entities;
 using Domain.Enums;
 
 namespace Application.Dtos.TheProtocolIt;
+
 public class TheProtocolItResponse
 {
     [JsonPropertyName("page")]
