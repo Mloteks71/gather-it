@@ -184,7 +184,7 @@ public class JustJoinItHttpClientTests
         var sut = new JustJoinItHttpClient(httpClient, config, logger);
 
         // Act & Assert
-        await Assert.ThrowsAsync<Exception>(() => sut.GetJobsAsync());
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.GetJobsAsync());
     }
 
     [Fact]
