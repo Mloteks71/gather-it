@@ -1,11 +1,6 @@
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 USER app
 WORKDIR /app
-USER root
-RUN apt-get update && apt-get install -y netcat-openbsd
-COPY wait-for-it.sh ./wait-for-it.sh
-RUN chmod +x ./wait-for-it.sh
-USER app
 EXPOSE 8080
 EXPOSE 8081
 
@@ -28,4 +23,4 @@ RUN dotnet publish "./WebApi.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["sh", "-c", "wait-for-it.sh postgres 5432 -- wait-for-it.sh rabbitmq 5672 -- dotnet WebApi.dll"]
+ENTRYPOINT ["dotnet", "WebApi.dll"]

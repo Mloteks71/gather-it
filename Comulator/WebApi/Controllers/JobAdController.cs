@@ -11,7 +11,8 @@ public class JobAdController : BaseController
 {
     private readonly IWriteJobAdRepository _writeJobAdRepository;
 
-    public JobAdController(ILogger<JobAdController> logger, IWriteJobAdRepository jobAdRepository) : base(logger)
+    public JobAdController(ILogger<JobAdController> logger, IWriteJobAdRepository jobAdRepository)
+        : base(logger)
     {
         _writeJobAdRepository = jobAdRepository;
     }
@@ -36,14 +37,25 @@ public class JobAdController : BaseController
         try
         {
             await _writeJobAdRepository.AddDescription(
-                requestDto.Select(x => new DescriptionCreateDto(x.Id, x.Description, x.Requirements, x.Benefits, x.Workstyle, x.AboutProject)));
+                requestDto.Select(x => new DescriptionCreateDto(
+                    x.Id,
+                    x.Description,
+                    x.Requirements,
+                    x.Benefits,
+                    x.Workstyle,
+                    x.AboutProject
+                ))
+            );
 
             var response = new
             {
                 message = $"Successfully added {requestDto.Count} job ad descriptions.",
-                count = requestDto.Count
+                count = requestDto.Count,
             };
-            Logger.LogInformation("Successfully added {Count} job ad descriptions", requestDto.Count);
+            Logger.LogInformation(
+                "Successfully added {Count} job ad descriptions",
+                requestDto.Count
+            );
             return Accepted(response);
         }
         catch (InvalidOperationException ex)
@@ -54,8 +66,10 @@ public class JobAdController : BaseController
         catch (Exception ex)
         {
             Logger.LogError(ex, "Unexpected error while adding job ad descriptions");
-            return StatusCode(StatusCodes.Status500InternalServerError,
-                new { error = "An unexpected error occurred while processing descriptions." });
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                new { error = "An unexpected error occurred while processing descriptions." }
+            );
         }
     }
 }
