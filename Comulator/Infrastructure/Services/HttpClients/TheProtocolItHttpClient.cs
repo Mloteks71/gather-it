@@ -3,8 +3,8 @@ using System.Net.Http.Json;
 using System.Text;
 using Application.Dtos;
 using Application.Dtos.TheProtocolIt;
+using Application.Interfaces;
 using Application.Interfaces.HttpClients;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Services.HttpClients;
@@ -15,10 +15,10 @@ public class TheProtocolItHttpClient : BaseJobBoardHttpClient, ITheProtocolItHtt
     private int _totalPages = 1;
     public TheProtocolItHttpClient(
         HttpClient httpClient,
-        IConfiguration config,
+        IConfigurationService config,
         ILogger<TheProtocolItResponse> logger) : base(httpClient, logger)
     {
-        _uri = new Uri(config["TheProtocolIt:Url"]!);
+        _uri = new Uri(config.TheProtocolItUrl);
     }
 
     public async Task<IEnumerable<JobAdCreateDto>> GetJobsAsync()

@@ -1,9 +1,9 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
 using Application.Dtos.JustJoinIt;
+using Application.Interfaces;
 using Domain.Enums;
 using Infrastructure.Services.HttpClients;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
@@ -14,13 +14,12 @@ public class JustJoinItHttpClientTests
 {
     private const string BaseUrl = "https://api.justjoin.it/";
 
-    private static IConfiguration GetConfiguration() =>
-        new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                { "JustJoinIt:Url", BaseUrl }
-            })
-            .Build();
+    private static IConfigurationService GetConfigurationService()
+    {
+        var mock = new Mock<IConfigurationService>();
+        mock.Setup(x => x.JustJoinItUrl).Returns(BaseUrl);
+        return mock.Object;
+    }
 
     private static HttpClient CreateHttpClient(HttpMessageHandler handler)
     {
@@ -108,7 +107,7 @@ public class JustJoinItHttpClientTests
             .ReturnsAsync(() => CreateHttpResponse(response));
 
         var httpClient = CreateHttpClient(mockHandler.Object);
-        var config = GetConfiguration();
+        var config = GetConfigurationService();
         var logger = new Mock<ILogger<JustJoinItHttpClient>>().Object;
 
         var sut = new JustJoinItHttpClient(httpClient, config, logger);
@@ -146,7 +145,7 @@ public class JustJoinItHttpClientTests
             .ReturnsAsync(() => responses.Dequeue());
 
         var httpClient = CreateHttpClient(mockHandler.Object);
-        var config = GetConfiguration();
+        var config = GetConfigurationService();
         var logger = new Mock<ILogger<JustJoinItHttpClient>>().Object;
 
         var sut = new JustJoinItHttpClient(httpClient, config, logger);
@@ -178,7 +177,7 @@ public class JustJoinItHttpClientTests
             .ReturnsAsync(emptyResponse);
 
         var httpClient = CreateHttpClient(mockHandler.Object);
-        var config = GetConfiguration();
+        var config = GetConfigurationService();
         var logger = new Mock<ILogger<JustJoinItHttpClient>>().Object;
 
         var sut = new JustJoinItHttpClient(httpClient, config, logger);
@@ -202,7 +201,7 @@ public class JustJoinItHttpClientTests
             .ReturnsAsync(CreateHttpResponse(response));
 
         var httpClient = CreateHttpClient(mockHandler.Object);
-        var config = GetConfiguration();
+        var config = GetConfigurationService();
         var logger = new Mock<ILogger<JustJoinItHttpClient>>().Object;
 
         var sut = new JustJoinItHttpClient(httpClient, config, logger);

@@ -2,8 +2,8 @@ using System.Diagnostics;
 using System.Net.Http.Json;
 using Application.Dtos;
 using Application.Dtos.SolidJobs;
+using Application.Interfaces;
 using Application.Interfaces.HttpClients;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Services.HttpClients;
@@ -13,10 +13,10 @@ public class SolidJobsHttpClient : BaseJobBoardHttpClient, ISolidJobsHttpClient
     private readonly Uri _uri;
     public SolidJobsHttpClient(
         HttpClient httpClient,
-        IConfiguration config,
+        IConfigurationService config,
         ILogger<SolidJobsHttpClient> logger) : base(httpClient, logger)
     {
-        _uri = new Uri(config["SolidJobs:Url"]!);
+        _uri = new Uri(config.SolidJobsUrl);
     }
 
     public async Task<IEnumerable<JobAdCreateDto>> GetJobsAsync()

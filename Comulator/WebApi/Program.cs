@@ -15,16 +15,14 @@ using Microsoft.EntityFrameworkCore;
 using RabbitMQ.Client.Core.DependencyInjection;
 using RabbitMQ.Client.Core.DependencyInjection.Configuration;
 using Serilog;
-using WebApi.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
-var postgresConnectionString = DatabaseConfigHelper.GetPostgresConnectionString(configuration);
+var configService = new ConfigurationService(configuration);
+builder.Services.AddSingleton<IConfigurationService>(configService);
 
-Log.Logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(builder.Configuration)
-    .CreateLogger();
+Log.Logger = new LoggerConfiguration().ReadFrom.Configuration(builder.Configuration).CreateLogger();
 
 builder.Host.UseSerilog();
 
@@ -33,8 +31,11 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<GatherItDbContext>(options =>
-    options.UseNpgsql(postgresConnectionString,
-        optionsBuilder => optionsBuilder.MigrationsAssembly("Domain")));
+    options.UseNpgsql(
+        configService.PostgresConnectionString,
+        optionsBuilder => optionsBuilder.MigrationsAssembly("Domain")
+    )
+);
 
 builder.Services.AddScoped<IWriteJobAdRepository, WriteJobRepository>();
 builder.Services.AddScoped<IReadJobAdRepository, ReadJobRepository>();
@@ -75,17 +76,12 @@ builder.Services.AddHttpClient<ISolidJobsHttpClient, SolidJobsHttpClient>(client
     }
 });
 
-var rabbitSection = configuration.GetSection("RabbitMQ");
-var rabbitMQConfiguration = new RabbitMqServiceOptions
-{
-    HostName = rabbitSection["HostName"]!,
-    Port = Convert.ToInt32(rabbitSection["Port"]!),
-    UserName = rabbitSection["UserName"]!,
-    Password = rabbitSection["Password"]!
-};
-builder.Services.AddRabbitMqServices(rabbitMQConfiguration);
+builder.Services.AddRabbitMqServices(configService.RabbitMqServiceOptions);
 
-builder.Services.AddProductionExchange(rabbitSection["Exchange:Name"]!, new RabbitMqExchangeOptions());
+builder.Services.AddProductionExchange(
+    configService.RabbitMqExchangeName,
+    new RabbitMqExchangeOptions()
+);
 
 var app = builder.Build();
 
