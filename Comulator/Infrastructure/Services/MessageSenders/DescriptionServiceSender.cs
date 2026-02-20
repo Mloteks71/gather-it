@@ -1,8 +1,8 @@
 ﻿using System.Text;
 using Application.Dtos.Messages.Requests;
+using Application.Interfaces;
 using Application.Interfaces.MessageSenders;
 using Domain.Enums;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client.Core.DependencyInjection.Services.Interfaces;
 
@@ -12,16 +12,14 @@ public class DescriptionServiceMessageSender : IDescriptionServiceMessageSender
 {
     private readonly Dictionary<Site, string> _routingKeys;
     private readonly IProducingService _producingService;
-    private readonly IConfiguration _configuration;
+    private readonly string _exchangeName;
     private readonly ILogger Logger;
 
-    public DescriptionServiceMessageSender(IConfiguration config, IProducingService producingService, ILogger<IDescriptionServiceMessageSender> logger)
+    public DescriptionServiceMessageSender(IConfigurationService config, IProducingService producingService, ILogger<IDescriptionServiceMessageSender> logger)
     {
-        _routingKeys = config.GetSection("RabbitMQ:DescriptionServiceRoutingKeys")
-                    .GetChildren()
-                    .ToDictionary(x => (Site)Enum.Parse(typeof(Site), x.Key), x => x.Value!);
+        _routingKeys = config.RabbitMqDescriptionServiceRoutingKeys;
         _producingService = producingService;
-        _configuration = config;
+        _exchangeName = config.RabbitMqExchangeName;
         Logger = logger;
     }
 
@@ -35,7 +33,7 @@ public class DescriptionServiceMessageSender : IDescriptionServiceMessageSender
             }
 
             var routingKey = _routingKeys[descriptionRequestDtoList.Key];
-            var exchangeName = _configuration["RabbitMQ:Exchange:Name"]!;
+            var exchangeName = _exchangeName;
             byte[] messageBodyBytes = Encoding.UTF8.GetBytes(descriptionRequestDtoList.ToList().ToString()!);
 
             Logger.LogInformation("RoutingKey {routingKey}, exchangeName {exchangeName}", routingKey, exchangeName);
