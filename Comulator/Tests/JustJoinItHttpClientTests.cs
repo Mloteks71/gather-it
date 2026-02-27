@@ -1,9 +1,9 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
-using Application.Dtos.JustJoinIt;
 using Application.Interfaces;
+using Application.Models.Responses;
+using Application.Services.HttpClients;
 using Domain.Enums;
-using Infrastructure.Services.HttpClients;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;

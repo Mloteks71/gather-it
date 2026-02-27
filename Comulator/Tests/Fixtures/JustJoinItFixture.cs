@@ -1,6 +1,6 @@
-﻿using Application.Dtos.JustJoinIt;
+﻿using Application.Models.Responses;
 using Domain.Enums;
-using static Application.Dtos.JustJoinIt.JustJoinItResponse;
+using static Application.Models.Responses.JustJoinItResponse;
 
 namespace Tests.Fixtures;
 

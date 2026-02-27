@@ -23,7 +23,7 @@ CREATE TABLE job_ad (
 CREATE TABLE skill (
     skill_id INT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    variants text[]
+    variants text[] NOT NULL
 );
 
 CREATE TABLE skill_snapshot (
@@ -35,7 +35,7 @@ CREATE TABLE skill_snapshot (
 CREATE TABLE company (
     company_id INT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    variants text[]
+    variants text[] NOT NULL
 );
 
 CREATE TABLE company_snapshot (

@@ -1,15 +1,8 @@
 using Application.Interfaces;
 using Application.Interfaces.HttpClients;
 using Application.Interfaces.MessageSenders;
-using Application.Interfaces.Repositories;
-using Application.Interfaces.Repositories.Read;
-using Application.Interfaces.Repositories.Write;
-using Domain;
-using Infrastructure.Repositories;
-using Infrastructure.Repositories.Read;
-using Infrastructure.Repositories.Write;
-using Infrastructure.Services;
-using Infrastructure.Services.HttpClients;
+using Application.Services;
+using Application.Services.HttpClients;
 using Infrastructure.Services.MessageSenders;
 using Microsoft.EntityFrameworkCore;
 using RabbitMQ.Client.Core.DependencyInjection;
@@ -30,19 +23,6 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<GatherItDbContext>(options =>
-    options.UseNpgsql(
-        configService.PostgresConnectionString,
-        optionsBuilder => optionsBuilder.MigrationsAssembly("Domain")
-    )
-);
-
-builder.Services.AddScoped<IWriteJobAdRepository, WriteJobRepository>();
-builder.Services.AddScoped<IReadJobAdRepository, ReadJobRepository>();
-builder.Services.AddScoped<IReadCompanyNameRepository, ReadCompanyNameRepository>();
-builder.Services.AddScoped<IReadCityRepository, ReadCityRepository>();
-
-builder.Services.AddScoped<IDocumentSimilarityService, DocumentSimilarityService>();
 builder.Services.AddScoped<IJobAdService, JobAdService>();
 builder.Services.AddScoped<IComulator, Comulator>();
 builder.Services.AddScoped<IDescriptionServiceMessageSender, DescriptionServiceMessageSender>();
@@ -67,15 +47,6 @@ builder.Services.AddHttpClient<ITheProtocolItHttpClient, TheProtocolItHttpClient
     }
 });
 
-builder.Services.AddHttpClient<ISolidJobsHttpClient, SolidJobsHttpClient>(client =>
-{
-    var headers = configuration.GetSection("SolidJobs:HttpHeaders").GetChildren();
-    foreach (var header in headers)
-    {
-        client.DefaultRequestHeaders.TryAddWithoutValidation(header.Key, header.Value);
-    }
-});
-
 builder.Services.AddRabbitMqServices(configService.RabbitMqServiceOptions);
 
 builder.Services.AddProductionExchange(
@@ -92,12 +63,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseSerilogRequestLogging();
-
-using (var serviceScope = app.Services.CreateAsyncScope())
-{
-    var dbContext = serviceScope.ServiceProvider.GetRequiredService<GatherItDbContext>();
-    await dbContext.Database.MigrateAsync();
-}
 
 if (!app.Environment.IsDevelopment())
 {

@@ -1,5 +1,4 @@
-using Application.Dtos;
-using Domain.Entities;
+using Application.Models.Dtos;
 
 namespace Application.Interfaces;
 
