@@ -1594,3 +1594,4 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 /src/WebApi/appsettings.Development.json
+CLAUDE.md
