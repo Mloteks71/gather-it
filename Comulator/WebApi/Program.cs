@@ -14,8 +14,6 @@ var configuration = builder.Configuration;
 
 var configService = new ConfigurationService(configuration);
 builder.Services.AddSingleton<IConfigurationService>(configService);
-var configService = new ConfigurationService(configuration);
-builder.Services.AddSingleton<IConfigurationService>(configService);
 
 Log.Logger = new LoggerConfiguration().ReadFrom.Configuration(builder.Configuration).CreateLogger();
 Log.Logger = new LoggerConfiguration().ReadFrom.Configuration(builder.Configuration).CreateLogger();
