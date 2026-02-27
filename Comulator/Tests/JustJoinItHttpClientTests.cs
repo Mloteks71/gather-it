@@ -19,6 +19,12 @@ public class JustJoinItHttpClientTests
         mock.Setup(x => x.JustJoinItUrl).Returns(BaseUrl);
         return mock.Object;
     }
+    private static IConfigurationService GetConfigurationService()
+    {
+        var mock = new Mock<IConfigurationService>();
+        mock.Setup(x => x.JustJoinItUrl).Returns(BaseUrl);
+        return mock.Object;
+    }
 
     private static HttpClient CreateHttpClient(HttpMessageHandler handler)
     {
@@ -106,6 +112,7 @@ public class JustJoinItHttpClientTests
             .ReturnsAsync(() => CreateHttpResponse(response));
 
         var httpClient = CreateHttpClient(mockHandler.Object);
+        var config = GetConfigurationService();
         var config = GetConfigurationService();
         var logger = new Mock<ILogger<JustJoinItHttpClient>>().Object;
 
