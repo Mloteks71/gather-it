@@ -1,5 +1,5 @@
 using System.Net;
-using Infrastructure.Services.HttpClients;
+using Application.Services.HttpClients;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
