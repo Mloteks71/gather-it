@@ -1596,3 +1596,8 @@ FodyWeavers.xsd
 /src/WebApi/appsettings.Development.json
 CLAUDE.md
 /.mcp.json
+
+
+# Rust
+/target/
+/binder/target
