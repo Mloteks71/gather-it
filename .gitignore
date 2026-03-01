@@ -1595,3 +1595,8 @@ FodyWeavers.xsd
 *.sln.iml
 /src/WebApi/appsettings.Development.json
 CLAUDE.md
+
+
+# Rust
+/target/
+/binder/target
