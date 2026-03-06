@@ -3,6 +3,7 @@ using Application.Interfaces.HttpClients;
 using Application.Interfaces.MessageSenders;
 using Application.Services;
 using Application.Services.HttpClients;
+using Application.Services.MessageSenders;
 using Infrastructure.Services.MessageSenders;
 using Microsoft.EntityFrameworkCore;
 using RabbitMQ.Client.Core.DependencyInjection;
@@ -27,6 +28,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IJobAdService, JobAdService>();
 builder.Services.AddScoped<IComulator, Comulator>();
 builder.Services.AddScoped<IDescriptionServiceMessageSender, DescriptionServiceMessageSender>();
+builder.Services.AddScoped<IMappingServiceMessageSender, MappingServiceMessageSender>();
+builder.Services.AddScoped<IResponseMapper, ResponseMapper>();
 
 // Configure HTTP clients with their respective headers
 // Headers are set once during client creation, not in constructors
@@ -54,8 +57,9 @@ builder.Services.AddProductionExchange(
     configService.RabbitMqExchangeName,
     new RabbitMqExchangeOptions()
 );
+
 builder.Services.AddProductionExchange(
-    configService.RabbitMqExchangeName,
+    configService.RabbitMqMappingExchangeName,
     new RabbitMqExchangeOptions()
 );
 

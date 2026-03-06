@@ -16,4 +16,6 @@ public interface IConfigurationService
     string RabbitMqExchangeName { get; }
     RabbitMqServiceOptions RabbitMqServiceOptions { get; }
     Dictionary<Site, string> RabbitMqDescriptionServiceRoutingKeys { get; }
+    string RabbitMqMappingRoutingKey { get; }
+    string RabbitMqMappingExchangeName { get; }
 }
