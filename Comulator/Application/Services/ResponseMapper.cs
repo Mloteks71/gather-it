@@ -28,8 +28,12 @@ public class ResponseMapper : IResponseMapper
             SourceSite = Site.JustJoinIt,
             RequiredSkills = jobAd.RequiredSkills,
             NiceToHaveSkills = jobAd.NiceToHaveSkills,
-            WorkplaceTypes = string.IsNullOrEmpty(jobAd.WorkplaceType) ? null : [jobAd.WorkplaceType],
-            ExperienceLevels = string.IsNullOrEmpty(jobAd.ExperienceLevel) ? null : [jobAd.ExperienceLevel],
+            WorkplaceTypes = string.IsNullOrEmpty(jobAd.WorkplaceType)
+                ? null
+                : [jobAd.WorkplaceType],
+            ExperienceLevels = string.IsNullOrEmpty(jobAd.ExperienceLevel)
+                ? null
+                : [jobAd.ExperienceLevel],
             Locations = GetJustJoinItLocations(jobAd),
             Salaries = jobAd.EmploymentTypes?.Select(sr => new SalaryRangeDto
             {
@@ -43,7 +47,8 @@ public class ResponseMapper : IResponseMapper
             LogoUrl = jobAd.CompanyLogoThumbUrl
         }).ToList();
 
-        _logger.LogInformation("Successfully mapped {Count} JustJoinIt job ads", 
+        _logger.LogInformation(
+            "Successfully mapped {Count} JustJoinIt job ads",
             mappedAds.Count);
 
         return mappedAds;
@@ -64,14 +69,18 @@ public class ResponseMapper : IResponseMapper
             NiceToHaveSkills = null,
             WorkplaceTypes = offer.WorkModes,
             ExperienceLevels = offer.PositionLevels?.Select(pl => pl.Value).ToList(),
-            Locations = offer.Workplace?.Select(w => w.City).Where(c => !string.IsNullOrEmpty(c)).ToList(),
+            Locations = offer.Workplace
+                ?.Select(w => w.City)
+                .Where(c => !string.IsNullOrEmpty(c))
+                .ToList(),
             Salaries = MapTheProtocolSalaries(offer),
             PublishedAt = offer.PublicationDateUtc,
             Technologies = offer.Technologies,
             LogoUrl = offer.LogoUrl
         }).ToList();
 
-        _logger.LogInformation("Successfully mapped {Count} TheProtocol job ads", 
+        _logger.LogInformation(
+            "Successfully mapped {Count} TheProtocol job ads",
             mappedAds.Count);
 
         return mappedAds;
@@ -88,7 +97,7 @@ public class ResponseMapper : IResponseMapper
                 .Where(c => !string.IsNullOrEmpty(c))
                 .Distinct()
                 .ToList();
-            
+
             locations.AddRange(multiLocationCities);
         }
 
