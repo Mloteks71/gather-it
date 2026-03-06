@@ -24,6 +24,8 @@ public class ConfigurationService : IConfigurationService
         Password = RabbitMqPassword,
     };
     public Dictionary<Site, string> RabbitMqDescriptionServiceRoutingKeys { get; }
+    public string RabbitMqMappingRoutingKey { get; }
+    public string RabbitMqMappingExchangeName { get; }
 
     public ConfigurationService(IConfiguration configuration)
     {
@@ -45,5 +47,8 @@ public class ConfigurationService : IConfigurationService
         RabbitMqDescriptionServiceRoutingKeys = rabbitSection.GetSection("DescriptionServiceRoutingKeys")
             .GetChildren()
             .ToDictionary(x => (Site)Enum.Parse(typeof(Site), x.Key), x => x.Value!);
+
+        RabbitMqMappingRoutingKey = rabbitSection["MappingRoutingKey"]!;
+        RabbitMqMappingExchangeName = rabbitSection["MappingExchange:Name"]!;
     }
 }
