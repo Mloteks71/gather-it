@@ -29,6 +29,15 @@
       "auto_delete": false,
       "internal": false,
       "arguments": {}
+    },
+    {
+      "name": "mapping_exchange",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
     }
   ],
   "queues": [
@@ -44,6 +53,13 @@
       "vhost": "/",
       "durable": false,
       "auto_delete": true,
+      "arguments": {}
+    },
+    {
+      "name": "MappingQueue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
       "arguments": {}
     }
   ],
@@ -62,6 +78,14 @@
       "destination": "TheProtocolItDescription",
       "destination_type": "queue",
       "routing_key": "TheProtocolIt",
+      "arguments": {}
+    },
+    {
+      "source": "mapping_exchange",
+      "vhost": "/",
+      "destination": "MappingQueue",
+      "destination_type": "queue",
+      "routing_key": "mapping",
       "arguments": {}
     }
   ]
