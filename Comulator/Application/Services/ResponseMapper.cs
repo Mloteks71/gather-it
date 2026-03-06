@@ -15,7 +15,7 @@ public class ResponseMapper : IResponseMapper
         _logger = logger;
     }
 
-    public List<CommonJobAdDto> MapJustJoinItResponse(JustJoinItResponse response)
+    public IEnumerable<CommonJobAdDto> MapJustJoinItResponse(JustJoinItResponse response)
     {
         _logger.LogInformation("Mapping {Count} job ads from JustJoinIt", response.Data.Count);
 
@@ -26,15 +26,23 @@ public class ResponseMapper : IResponseMapper
             Title = jobAd.Title,
             CompanyName = jobAd.CompanyName,
             SourceSite = Site.JustJoinIt,
-            RequiredSkills = jobAd.RequiredSkills,
-            NiceToHaveSkills = jobAd.NiceToHaveSkills,
-            WorkplaceTypes = string.IsNullOrEmpty(jobAd.WorkplaceType)
+            Skills = jobAd.RequiredSkills,
+            WorkplaceTypes = string.IsNullOrWhiteSpace(jobAd.WorkplaceType)
                 ? null
                 : [jobAd.WorkplaceType],
-            ExperienceLevels = string.IsNullOrEmpty(jobAd.ExperienceLevel)
+            ExperienceLevels = string.IsNullOrWhiteSpace(jobAd.ExperienceLevel)
                 ? null
                 : [jobAd.ExperienceLevel],
-            Locations = GetJustJoinItLocations(jobAd),
+            Locations = (jobAd.Multilocation?
+                .Select(l => l.City)
+                ?? Enumerable.Empty<string?>())
+                .Append(jobAd.City)
+                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .Select(c => c!)
+                .Distinct()
+                .ToList() is { Count: > 0 } locations
+                ? locations
+                : null,
             Salaries = jobAd.EmploymentTypes?.Select(sr => new SalaryRangeDto
             {
                 From = sr.From,
@@ -43,18 +51,17 @@ public class ResponseMapper : IResponseMapper
                 ContractType = sr.Type
             }).ToList(),
             PublishedAt = jobAd.PublishedAt,
-            Technologies = null,
             LogoUrl = jobAd.CompanyLogoThumbUrl
-        }).ToList();
+        });
 
         _logger.LogInformation(
             "Successfully mapped {Count} JustJoinIt job ads",
-            mappedAds.Count);
+            mappedAds.Count());
 
         return mappedAds;
     }
 
-    public List<CommonJobAdDto> MapTheProtocolItResponse(TheProtocolItResponse response)
+    public IEnumerable<CommonJobAdDto> MapTheProtocolItResponse(TheProtocolItResponse response)
     {
         _logger.LogInformation("Mapping {Count} job ads from TheProtocol", response.Offers.Count);
 
@@ -65,79 +72,44 @@ public class ResponseMapper : IResponseMapper
             Title = offer.Title,
             CompanyName = offer.Employer,
             SourceSite = Site.TheProtocolIt,
-            RequiredSkills = null,
-            NiceToHaveSkills = null,
+            Skills = offer.Technologies,
             WorkplaceTypes = offer.WorkModes,
             ExperienceLevels = offer.PositionLevels?.Select(pl => pl.Value).ToList(),
             Locations = offer.Workplace
                 ?.Select(w => w.City)
-                .Where(c => !string.IsNullOrEmpty(c))
+                .Where(c => !string.IsNullOrWhiteSpace(c))
                 .ToList(),
-            Salaries = MapTheProtocolSalaries(offer),
+            Salaries = offer.TypesOfContracts
+                ?.Where(c => c.Salary != null)
+                .Select(c => new SalaryRangeDto
+                {
+                    From = c.Salary!.From,
+                    To = c.Salary.To,
+                    Currency = c.Salary.CurrencySymbol ?? string.Empty,
+                    ContractType = c.Salary.KindName
+                })
+                .DefaultIfEmpty(offer.Salary == null
+                    ? null
+                    : new SalaryRangeDto
+                    {
+                        From = null,
+                        To = offer.Salary.To,
+                        Currency = offer.Salary.Currency ?? string.Empty,
+                        ContractType = null
+                    })
+                .Where(s => s != null)
+                .Select(s => s!)
+                .ToList() is { Count: > 0 } salaries
+                ? salaries
+                : null,
             PublishedAt = offer.PublicationDateUtc,
-            Technologies = offer.Technologies,
             LogoUrl = offer.LogoUrl
-        }).ToList();
+        });
 
         _logger.LogInformation(
             "Successfully mapped {Count} TheProtocol job ads",
-            mappedAds.Count);
+            mappedAds.Count());
 
         return mappedAds;
-    }
-
-    private static List<string>? GetJustJoinItLocations(JobAd jobAd)
-    {
-        var locations = new List<string>();
-
-        if (jobAd.Multilocation != null)
-        {
-            var multiLocationCities = jobAd.Multilocation
-                .Select(l => l.City)
-                .Where(c => !string.IsNullOrEmpty(c))
-                .Distinct()
-                .ToList();
-
-            locations.AddRange(multiLocationCities);
-        }
-
-        if (!string.IsNullOrEmpty(jobAd.City) && !locations.Contains(jobAd.City))
-        {
-            locations.Add(jobAd.City);
-        }
-
-        return locations.Count > 0 ? locations : null;
-    }
-
-    private static List<SalaryRangeDto>? MapTheProtocolSalaries(TheProtocolItOffer offer)
-    {
-        var salaries = new List<SalaryRangeDto>();
-
-        if (offer.TypesOfContracts != null)
-        {
-            foreach (var contract in offer.TypesOfContracts.Where(c => c.Salary != null))
-            {
-                salaries.Add(new SalaryRangeDto
-                {
-                    From = contract.Salary!.From,
-                    To = contract.Salary.To,
-                    Currency = contract.Salary.CurrencySymbol ?? string.Empty,
-                    ContractType = contract.Salary.KindName
-                });
-            }
-        }
-
-        if (offer.Salary != null && salaries.Count == 0)
-        {
-            salaries.Add(new SalaryRangeDto
-            {
-                From = null,
-                To = offer.Salary.To,
-                Currency = offer.Salary.Currency ?? string.Empty,
-                ContractType = null
-            });
-        }
-
-        return salaries.Count > 0 ? salaries : null;
     }
 }
