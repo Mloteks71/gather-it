@@ -5,6 +5,6 @@ namespace Application.Interfaces;
 
 public interface IResponseMapper
 {
-    List<CommonJobAdDto> MapJustJoinItResponse(JustJoinItResponse response);
-    List<CommonJobAdDto> MapTheProtocolItResponse(TheProtocolItResponse response);
+    IEnumerable<CommonJobAdDto> MapJustJoinItResponse(JustJoinItResponse response);
+    IEnumerable<CommonJobAdDto> MapTheProtocolItResponse(TheProtocolItResponse response);
 }
