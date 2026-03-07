@@ -55,8 +55,7 @@ public class ResponseMapper : IResponseMapper
         });
 
         _logger.LogInformation(
-            "Successfully mapped {Count} JustJoinIt job ads",
-            mappedAds.Count());
+            "Successfully mapped JustJoinIt job ads");
 
         return mappedAds;
     }
@@ -107,8 +106,7 @@ public class ResponseMapper : IResponseMapper
         });
 
         _logger.LogInformation(
-            "Successfully mapped {Count} TheProtocol job ads",
-            mappedAds.Count());
+            "Successfully mapped TheProtocol job ads");
 
         return mappedAds;
     }
