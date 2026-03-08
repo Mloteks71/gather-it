@@ -1,6 +1,8 @@
-﻿namespace Application.Interfaces.HttpClients;
+﻿using Application.Models.Responses;
 
-public interface ITheProtocolItHttpClient : IJobBoardHttpClient
+namespace Application.Interfaces.HttpClients;
+
+public interface ITheProtocolItHttpClient
 {
-
+    Task<TheProtocolItResponse> GetJobsAsync();
 }

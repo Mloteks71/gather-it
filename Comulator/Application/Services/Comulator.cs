@@ -8,20 +8,28 @@ public class Comulator : IComulator
 {
     private readonly IJustJoinItHttpClient _justJoinItHttpClient;
     private readonly ITheProtocolItHttpClient _theProtocolItHttpClient;
+    private readonly IResponseMapper _responseMapper;
 
-    public Comulator(IJustJoinItHttpClient justJoinItHttpClient, ITheProtocolItHttpClient theProtocolItHttpClient)
+    public Comulator(
+        IJustJoinItHttpClient justJoinItHttpClient,
+        ITheProtocolItHttpClient theProtocolItHttpClient,
+        IResponseMapper responseMapper)
     {
         _justJoinItHttpClient = justJoinItHttpClient;
         _theProtocolItHttpClient = theProtocolItHttpClient;
+        _responseMapper = responseMapper;
     }
 
-    public async Task<IEnumerable<JobAdCreateDto>> Comulate()
+    public async Task<IEnumerable<CommonJobAdDto>> Comulate()
     {
-        var justJoinItJobs = _justJoinItHttpClient.GetJobsAsync();
-        var theProtocolItJobs = _theProtocolItHttpClient.GetJobsAsync();
+        var justJoinItResponseTask = _justJoinItHttpClient.GetJobsAsync();
+        var theProtocolItResponseTask = _theProtocolItHttpClient.GetJobsAsync();
 
-        var results = await Task.WhenAll(justJoinItJobs, theProtocolItJobs);
+        await Task.WhenAll(justJoinItResponseTask, theProtocolItResponseTask);
 
-        return results.SelectMany(x => x);
+        var justJoinItJobs = _responseMapper.MapJustJoinItResponse(justJoinItResponseTask.Result);
+        var theProtocolItJobs = _responseMapper.MapTheProtocolItResponse(theProtocolItResponseTask.Result);
+
+        return justJoinItJobs.Concat(theProtocolItJobs);
     }
 }

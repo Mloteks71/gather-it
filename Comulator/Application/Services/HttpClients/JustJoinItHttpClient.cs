@@ -2,7 +2,6 @@
 using System.Net.Http.Json;
 using Application.Interfaces;
 using Application.Interfaces.HttpClients;
-using Application.Models.Dtos;
 using Application.Models.Responses;
 using Microsoft.Extensions.Logging;
 
@@ -20,13 +19,13 @@ public class JustJoinItHttpClient : BaseJobBoardHttpClient, IJustJoinItHttpClien
         _uri = new Uri(config.JustJoinItUrl);
     }
 
-    public async Task<IEnumerable<JobAdCreateDto>> GetJobsAsync()
+    public async Task<JustJoinItResponse> GetJobsAsync()
     {
         var stopwatch = new Stopwatch();
         stopwatch.Start();
-        var result = new List<JobAdCreateDto>();
+        
         var firstPage = new Uri($"{_uri}{1}");
-        var content = await GetJobsAsync(firstPage);
+        var content = await base.GetJobsAsync(firstPage);
         var justJoinItResponse = await content.ReadFromJsonAsync<JustJoinItResponse>();
 
         if (justJoinItResponse is null)
@@ -35,37 +34,35 @@ public class JustJoinItHttpClient : BaseJobBoardHttpClient, IJustJoinItHttpClien
         if (justJoinItResponse.Data is null || justJoinItResponse.Data.Count == 0)
         {
             Logger.LogWarning("JustJoinIt returned no job postings.");
-            return result;
+            return justJoinItResponse;
         }
 
         _totalPages = justJoinItResponse.Meta.TotalPages;
 
-        // FIX:
-        // result.AddRange(justJoinItResponse.GenerateJobAdCreateDtos());
+        if (_totalPages > 1)
+        {
+            var pagesToFetch = Enumerable
+                .Range(2, _totalPages - 1)
+                .Select(x => base.GetJobsAsync(new Uri($"{_uri}{x}")));
 
-        var pagesToFetch = Enumerable
-            .Range(2, _totalPages - 1)
-            .Select(x => GetJobsAsync(new Uri($"{_uri}{x}")));
+            var pageContents = await Task.WhenAll(pagesToFetch);
 
-        var pageContents = await Task.WhenAll(pagesToFetch);
+            var deserializationTasks = pageContents
+                .Select(content => content.ReadFromJsonAsync<JustJoinItResponse>());
 
-        var deserializationTasks = pageContents
-            .Select(content => content.ReadFromJsonAsync<JustJoinItResponse>());
+            var responses = await Task.WhenAll(deserializationTasks);
 
-        var responses = await Task.WhenAll(deserializationTasks);
+            var additionalJobAds = responses
+                .Where(response => response is not null)
+                .SelectMany(response => response!.Data);
 
-        // FIX:
-        // var dataToAdd = responses
-        //     .Where(response => response is not null)
-        //     .SelectMany(response => response!.GenerateJobAdCreateDtos());
-
-        // result.AddRange(dataToAdd);
+            justJoinItResponse.Data.AddRange(additionalJobAds);
+        }
 
         stopwatch.Stop();
-        var elapsedMilliseconds = stopwatch.ElapsedMilliseconds;
+        Logger.LogInformation("Fetched {JobAdsCount} job ads from JustJoinIt in {ElapsedMilliseconds} ms", 
+            justJoinItResponse.Data.Count, stopwatch.ElapsedMilliseconds);
 
-        Logger.LogInformation("Fetched {JobAdsCount} job ads from JustJoinIt in {ElapsedMilliseconds} ms", result.Count, elapsedMilliseconds);
-
-        return result;
+        return justJoinItResponse;
     }
 }
