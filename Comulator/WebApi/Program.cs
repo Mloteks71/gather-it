@@ -5,18 +5,17 @@ using Application.Services;
 using Application.Services.HttpClients;
 using Application.Services.MessageSenders;
 using Infrastructure.Services.MessageSenders;
-using Microsoft.EntityFrameworkCore;
 using RabbitMQ.Client.Core.DependencyInjection;
 using RabbitMQ.Client.Core.DependencyInjection.Configuration;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
 var configuration = builder.Configuration;
 
 var configService = new ConfigurationService(configuration);
 builder.Services.AddSingleton<IConfigurationService>(configService);
 
-Log.Logger = new LoggerConfiguration().ReadFrom.Configuration(builder.Configuration).CreateLogger();
 Log.Logger = new LoggerConfiguration().ReadFrom.Configuration(builder.Configuration).CreateLogger();
 
 builder.Host.UseSerilog();

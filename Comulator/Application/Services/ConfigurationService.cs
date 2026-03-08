@@ -10,19 +10,19 @@ public class ConfigurationService : IConfigurationService
     public string JustJoinItUrl { get; }
     public string TheProtocolItUrl { get; }
     public string SolidJobsUrl { get; }
-    public string PostgresConnectionString { get; }
     public string RabbitMqHostName { get; }
     public int RabbitMqPort { get; }
     public string RabbitMqUserName { get; }
     public string RabbitMqPassword { get; }
     public string RabbitMqExchangeName { get; }
-    public RabbitMqServiceOptions RabbitMqServiceOptions => new()
-    {
-        HostName = RabbitMqHostName,
-        Port = RabbitMqPort,
-        UserName = RabbitMqUserName,
-        Password = RabbitMqPassword,
-    };
+    public RabbitMqServiceOptions RabbitMqServiceOptions =>
+        new()
+        {
+            HostName = RabbitMqHostName,
+            Port = RabbitMqPort,
+            UserName = RabbitMqUserName,
+            Password = RabbitMqPassword,
+        };
     public Dictionary<Site, string> RabbitMqDescriptionServiceRoutingKeys { get; }
     public string RabbitMqMappingRoutingKey { get; }
     public string RabbitMqMappingExchangeName { get; }
@@ -33,10 +33,6 @@ public class ConfigurationService : IConfigurationService
         TheProtocolItUrl = configuration["TheProtocolIt:Url"]!;
         SolidJobsUrl = configuration["SolidJobs:Url"]!;
 
-        var dbConfig = configuration.GetSection("Database:PostgreSQL");
-        PostgresConnectionString =
-            $"Host={dbConfig["Server"]};Database={dbConfig["Database"]};Username={dbConfig["UserId"]};Password={dbConfig["Password"]};Include Error Detail=true;";
-
         var rabbitSection = configuration.GetSection("RabbitMQ");
         RabbitMqHostName = rabbitSection["HostName"]!;
         RabbitMqPort = Convert.ToInt32(rabbitSection["Port"]!);
@@ -44,7 +40,8 @@ public class ConfigurationService : IConfigurationService
         RabbitMqPassword = rabbitSection["Password"]!;
         RabbitMqExchangeName = rabbitSection["Exchange:Name"]!;
 
-        RabbitMqDescriptionServiceRoutingKeys = rabbitSection.GetSection("DescriptionServiceRoutingKeys")
+        RabbitMqDescriptionServiceRoutingKeys = rabbitSection
+            .GetSection("DescriptionServiceRoutingKeys")
             .GetChildren()
             .ToDictionary(x => (Site)Enum.Parse(typeof(Site), x.Key), x => x.Value!);
 
