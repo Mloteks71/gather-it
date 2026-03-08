@@ -33,12 +33,26 @@ public class MappingServiceMessageSender : IMappingServiceMessageSender
             return;
         }
 
+        const int batchSize = 50;
+        var batches = jobAds.Chunk(batchSize).ToList();
+
         _logger.LogInformation(
-            "Sending {Count} mapped job ads to RabbitMQ",
-            jobAds.Count);
+            "Sending {TotalCount} mapped job ads to RabbitMQ in {BatchCount} batches",
+            jobAds.Count,
+            batches.Count);
 
-        await _producingService.SendAsync(jobAds, _exchangeName, _routingKey);
+        for (int i = 0; i < batches.Count; i++)
+        {
+            var batch = batches[i].ToList();
+            await _producingService.SendAsync(batch, _exchangeName, _routingKey);
+            
+            _logger.LogInformation(
+                "Sent batch {BatchNumber}/{TotalBatches} ({Count} job ads) to mapping queue",
+                i + 1,
+                batches.Count,
+                batch.Count);
+        }
 
-        _logger.LogInformation("Successfully sent {Count} job ads to mapping queue", jobAds.Count);
+        _logger.LogInformation("Successfully sent all {Count} job ads to mapping queue", jobAds.Count);
     }
 }

@@ -112,12 +112,11 @@ public class JustJoinItHttpClientTests
         var sut = new JustJoinItHttpClient(httpClient, config, logger);
 
         // Act
-        var jobs = await sut.GetJobsAsync();
+        var result = await sut.GetJobsAsync();
 
         // Assert
-        Assert.NotNull(jobs);
-        // Mapping to JobAdCreateDto not yet implemented
-        Assert.Empty(jobs);
+        Assert.NotNull(result);
+        Assert.Single(result.Data);
     }
 
     [Fact]
@@ -151,12 +150,12 @@ public class JustJoinItHttpClientTests
         var sut = new JustJoinItHttpClient(httpClient, config, logger);
 
         // Act
-        var jobs = await sut.GetJobsAsync();
+        var result = await sut.GetJobsAsync();
 
         // Assert
-        Assert.NotNull(jobs);
-        // Verify all 3 pages were fetched
+        Assert.NotNull(result);
         Assert.Empty(responses);
+        Assert.Equal(6, result.Data.Count);
     }
 
     [Fact]
@@ -208,10 +207,10 @@ public class JustJoinItHttpClientTests
         var sut = new JustJoinItHttpClient(httpClient, config, logger);
 
         // Act
-        var jobs = await sut.GetJobsAsync();
+        var result = await sut.GetJobsAsync();
 
         // Assert
-        Assert.NotNull(jobs);
-        Assert.Empty(jobs);
+        Assert.NotNull(result);
+        Assert.Empty(result.Data);
     }
 }

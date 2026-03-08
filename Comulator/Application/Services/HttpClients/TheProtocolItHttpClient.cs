@@ -3,7 +3,6 @@ using System.Net.Http.Json;
 using System.Text;
 using Application.Interfaces;
 using Application.Interfaces.HttpClients;
-using Application.Models.Dtos;
 using Application.Models.Responses;
 using Microsoft.Extensions.Logging;
 
@@ -21,14 +20,14 @@ public class TheProtocolItHttpClient : BaseJobBoardHttpClient, ITheProtocolItHtt
         _uri = new Uri(config.TheProtocolItUrl);
     }
 
-    public async Task<IEnumerable<JobAdCreateDto>> GetJobsAsync()
+    public async Task<TheProtocolItResponse> GetJobsAsync()
     {
         var stopwatch = new Stopwatch();
         stopwatch.Start();
-        var result = new List<JobAdCreateDto>();
+        
         var firstPage = new Uri($"{_uri}{1}");
         var requestContent = new StringContent("", Encoding.UTF8, "application/json");
-        var responseContent = await GetJobsAsync(firstPage, true, requestContent);
+        var responseContent = await base.GetJobsAsync(firstPage, true, requestContent);
         var theProtocolItResponse = await responseContent.ReadFromJsonAsync<TheProtocolItResponse>();
 
         if (theProtocolItResponse is null)
@@ -37,36 +36,30 @@ public class TheProtocolItHttpClient : BaseJobBoardHttpClient, ITheProtocolItHtt
         if (theProtocolItResponse.Offers is null || theProtocolItResponse.Offers.Count == 0)
         {
             Logger.LogWarning("TheProtocolIt returned no job postings.");
-            return result;
+            return theProtocolItResponse;
         }
 
         _totalPages = theProtocolItResponse.Page.Count;
 
-        // FIX:
-        // result.AddRange(theProtocolItResponse.GenerateJobAdCreateDtos());
-
-        var pagesToFetch = Enumerable
-            .Range(2, _totalPages)
-            .Select(async pageNumber =>
+        if (_totalPages > 1)
+        {
+            for (int pageNumber = 2; pageNumber <= _totalPages; pageNumber++)
             {
                 await Task.Delay(300);
-                var content = await GetJobsAsync(new Uri($"{_uri}{pageNumber}"), true, requestContent);
-                return await content.ReadFromJsonAsync<TheProtocolItResponse>();
-            });
-
-        var responses = await Task.WhenAll(pagesToFetch);
-
-        // FIX:
-        // var dataToAdd = responses
-        //     .Where(x => x is not null)
-        //     .SelectMany(x => x!.GenerateJobAdCreateDtos());
-
-        // result.AddRange(dataToAdd);
+                var content = await base.GetJobsAsync(new Uri($"{_uri}{pageNumber}"), true, requestContent);
+                var response = await content.ReadFromJsonAsync<TheProtocolItResponse>();
+                
+                if (response?.Offers is not null)
+                {
+                    theProtocolItResponse.Offers.AddRange(response.Offers);
+                }
+            }
+        }
 
         stopwatch.Stop();
-        var elapsedMilliseconds = stopwatch.ElapsedMilliseconds;
-        Logger.LogInformation("Fetched {JobAdsCount} job ads from TheProtocolIt in {ElapsedMilliseconds} ms", result.Count, elapsedMilliseconds);
+        Logger.LogInformation("Fetched {JobAdsCount} job ads from TheProtocolIt in {ElapsedMilliseconds} ms", 
+            theProtocolItResponse.Offers.Count, stopwatch.ElapsedMilliseconds);
 
-        return result;
+        return theProtocolItResponse;
     }
 }

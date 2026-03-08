@@ -4,5 +4,5 @@ namespace Application.Interfaces;
 
 public interface IComulator
 {
-    public Task<IEnumerable<JobAdCreateDto>> Comulate();
+    public Task<IEnumerable<CommonJobAdDto>> Comulate();
 }
