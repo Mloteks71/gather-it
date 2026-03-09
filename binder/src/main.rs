@@ -3,7 +3,6 @@ mod config;
 mod models;
 mod repositories;
 
-use lapin::types::ShortString;
 use sqlx::{Postgres, postgres::PgPoolOptions};
 
 use crate::config::config;
@@ -12,6 +11,8 @@ use crate::config::config;
 async fn main() -> color_eyre::Result<()> {
     let pool = setup_postgres().await?;
     let consumer = setup_rmq().await?;
+
+    bind::bind(&pool, consumer).await?;
 
     Ok(())
 }
@@ -34,7 +35,7 @@ async fn setup_rmq() -> color_eyre::Result<lapin::Consumer> {
 
     Ok(channel
         .basic_consume(
-            config().rabbitmq_consumer_tag.clone().into(),
+            config().rabbitmq_queue_name.clone().into(),
             config().rabbitmq_consumer_tag.clone().into(),
             consumer_options,
             Default::default(),

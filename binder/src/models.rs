@@ -3,5 +3,6 @@ pub mod company;
 pub mod description;
 pub mod enums;
 pub mod job_ad;
+pub mod messages;
 pub mod salary;
 pub mod skill;

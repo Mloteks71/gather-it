@@ -1,6 +1,6 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, sqlx::Type)]
+#[derive(Debug, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "job_site", rename_all = "snake_case")]
 pub enum JobSite {
     JustJoinIt,
