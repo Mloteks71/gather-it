@@ -1,11 +1,25 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, sqlx::Type)]
+#[serde(try_from = "u8")]
 #[sqlx(type_name = "job_site", rename_all = "snake_case")]
 pub enum JobSite {
     JustJoinIt,
     TheProtocolIt,
     SolidJobs,
+}
+
+impl TryFrom<u8> for JobSite {
+    type Error = String;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(JobSite::JustJoinIt),
+            1 => Ok(JobSite::TheProtocolIt),
+            2 => Ok(JobSite::SolidJobs),
+            _ => Err(format!("Unknown JobSite value: {value}")),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, sqlx::Type)]
