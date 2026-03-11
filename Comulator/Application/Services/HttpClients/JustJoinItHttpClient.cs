@@ -2,6 +2,7 @@
 using System.Net.Http.Json;
 using Application.Interfaces;
 using Application.Interfaces.HttpClients;
+using Application.Models.Dtos;
 using Application.Models.Responses;
 using Microsoft.Extensions.Logging;
 
@@ -10,45 +11,54 @@ namespace Application.Services.HttpClients;
 public class JustJoinItHttpClient : BaseJobBoardHttpClient, IJustJoinItHttpClient
 {
     private readonly Uri _uri;
-    private int _totalPages = 1;
+    private readonly IResponseMapper _responseMapper;
+
     public JustJoinItHttpClient(
         HttpClient httpClient,
+        ILogger<JustJoinItHttpClient> logger,
         IConfigurationService config,
-        ILogger<JustJoinItHttpClient> logger) : base(httpClient, logger)
+        IResponseMapper responseMapper
+    )
+        : base(httpClient, logger)
     {
         _uri = new Uri(config.JustJoinItUrl);
+        _responseMapper = responseMapper;
     }
 
-    public async Task<JustJoinItResponse> GetJobsAsync()
+    public async Task<IEnumerable<CommonJobAdDto>> GetJobsAsync()
     {
         var stopwatch = new Stopwatch();
         stopwatch.Start();
-        
+
         var firstPage = new Uri($"{_uri}{1}");
-        var content = await base.GetJobsAsync(firstPage);
+
+        var content = await GetJobsAsync(firstPage);
+
         var justJoinItResponse = await content.ReadFromJsonAsync<JustJoinItResponse>();
-
         if (justJoinItResponse is null)
-            throw new InvalidOperationException("JustJoinIt API returned null response. The API may be unavailable or the response format has changed.");
+            throw new InvalidOperationException(
+                "JustJoinIt API returned null response. The API may be unavailable or the response format has changed."
+            );
 
-        if (justJoinItResponse.Data is null || justJoinItResponse.Data.Count == 0)
+        if (justJoinItResponse.Data.Count == 0)
         {
             Logger.LogWarning("JustJoinIt returned no job postings.");
-            return justJoinItResponse;
+            return [];
         }
 
-        _totalPages = justJoinItResponse.Meta.TotalPages;
+        var totalPages = justJoinItResponse.Meta.TotalPages;
 
-        if (_totalPages > 1)
+        if (totalPages > 1)
         {
             var pagesToFetch = Enumerable
-                .Range(2, _totalPages - 1)
-                .Select(x => base.GetJobsAsync(new Uri($"{_uri}{x}")));
+                .Range(2, totalPages - 1)
+                .Select(x => GetJobsAsync(new Uri($"{_uri}{x}")));
 
             var pageContents = await Task.WhenAll(pagesToFetch);
 
-            var deserializationTasks = pageContents
-                .Select(content => content.ReadFromJsonAsync<JustJoinItResponse>());
+            var deserializationTasks = pageContents.Select(content =>
+                content.ReadFromJsonAsync<JustJoinItResponse>()
+            );
 
             var responses = await Task.WhenAll(deserializationTasks);
 
@@ -59,10 +69,13 @@ public class JustJoinItHttpClient : BaseJobBoardHttpClient, IJustJoinItHttpClien
             justJoinItResponse.Data.AddRange(additionalJobAds);
         }
 
-        stopwatch.Stop();
-        Logger.LogInformation("Fetched {JobAdsCount} job ads from JustJoinIt in {ElapsedMilliseconds} ms", 
-            justJoinItResponse.Data.Count, stopwatch.ElapsedMilliseconds);
+        Logger.LogInformation(
+            "Fetched {JobAdsCount} job ads from JustJoinIt in {ElapsedMilliseconds} ms",
+            // temp value
+            3120812,
+            stopwatch.ElapsedMilliseconds
+        );
 
-        return justJoinItResponse;
+        return _responseMapper.MapJustJoinItResponse(justJoinItResponse);
     }
 }

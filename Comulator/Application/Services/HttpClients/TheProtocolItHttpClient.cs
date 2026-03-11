@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text;
 using Application.Interfaces;
 using Application.Interfaces.HttpClients;
+using Application.Models.Dtos;
 using Application.Models.Responses;
 using Microsoft.Extensions.Logging;
 
@@ -11,32 +12,40 @@ namespace Application.Services.HttpClients;
 public class TheProtocolItHttpClient : BaseJobBoardHttpClient, ITheProtocolItHttpClient
 {
     private readonly Uri _uri;
+    private readonly IResponseMapper _responseMapper;
     private int _totalPages = 1;
+
     public TheProtocolItHttpClient(
         HttpClient httpClient,
+        ILogger<TheProtocolItResponse> logger,
         IConfigurationService config,
-        ILogger<TheProtocolItResponse> logger) : base(httpClient, logger)
+        IResponseMapper responseMapper
+    )
+        : base(httpClient, logger)
     {
         _uri = new Uri(config.TheProtocolItUrl);
+        _responseMapper = responseMapper;
     }
 
-    public async Task<TheProtocolItResponse> GetJobsAsync()
+    public async Task<IEnumerable<CommonJobAdDto>> GetJobsAsync()
     {
         var stopwatch = new Stopwatch();
         stopwatch.Start();
-        
+
         var firstPage = new Uri($"{_uri}{1}");
         var requestContent = new StringContent("", Encoding.UTF8, "application/json");
         var responseContent = await base.GetJobsAsync(firstPage, true, requestContent);
-        var theProtocolItResponse = await responseContent.ReadFromJsonAsync<TheProtocolItResponse>();
+        var theProtocolItResponse =
+            await responseContent.ReadFromJsonAsync<TheProtocolItResponse>();
 
         if (theProtocolItResponse is null)
-            throw new InvalidOperationException("TheProtocolIt API returned null response. The API may be unavailable or the response format has changed.");
-
-        if (theProtocolItResponse.Offers is null || theProtocolItResponse.Offers.Count == 0)
+            throw new InvalidOperationException(
+                "TheProtocolIt API returned null response. The API may be unavailable or the response format has changed."
+            );
+        if (theProtocolItResponse.Offers.Count == 0)
         {
             Logger.LogWarning("TheProtocolIt returned no job postings.");
-            return theProtocolItResponse;
+            return [];
         }
 
         _totalPages = theProtocolItResponse.Page.Count;
@@ -46,9 +55,12 @@ public class TheProtocolItHttpClient : BaseJobBoardHttpClient, ITheProtocolItHtt
             for (int pageNumber = 2; pageNumber <= _totalPages; pageNumber++)
             {
                 await Task.Delay(300);
-                var content = await base.GetJobsAsync(new Uri($"{_uri}{pageNumber}"), true, requestContent);
+                var content = await base.GetJobsAsync(
+                    new Uri($"{_uri}{pageNumber}"),
+                    true,
+                    requestContent
+                );
                 var response = await content.ReadFromJsonAsync<TheProtocolItResponse>();
-                
                 if (response?.Offers is not null)
                 {
                     theProtocolItResponse.Offers.AddRange(response.Offers);
@@ -57,9 +69,12 @@ public class TheProtocolItHttpClient : BaseJobBoardHttpClient, ITheProtocolItHtt
         }
 
         stopwatch.Stop();
-        Logger.LogInformation("Fetched {JobAdsCount} job ads from TheProtocolIt in {ElapsedMilliseconds} ms", 
-            theProtocolItResponse.Offers.Count, stopwatch.ElapsedMilliseconds);
+        Logger.LogInformation(
+            "Fetched {JobAdsCount} job ads from TheProtocolIt in {ElapsedMilliseconds} ms",
+            theProtocolItResponse.Offers.Count,
+            stopwatch.ElapsedMilliseconds
+        );
 
-        return theProtocolItResponse;
+        return _responseMapper.MapTheProtocolItResponse(theProtocolItResponse);
     }
 }

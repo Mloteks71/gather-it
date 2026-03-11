@@ -188,5 +188,5 @@ public class MetaData
     public int? PrevPage { get; set; }
 
     [JsonPropertyName("nextPage")]
-    public int? NextPage { get; set; }
+    public int NextPage { get; set; }
 }

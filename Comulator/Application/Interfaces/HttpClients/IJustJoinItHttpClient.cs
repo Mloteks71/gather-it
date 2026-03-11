@@ -1,8 +1,6 @@
-﻿using Application.Models.Responses;
+﻿namespace Application.Interfaces.HttpClients;
 
-namespace Application.Interfaces.HttpClients;
-
-public interface IJustJoinItHttpClient
+public interface IJustJoinItHttpClient : IJobBoardHttpClient
 {
-    Task<JustJoinItResponse> GetJobsAsync();
+
 }

@@ -12,13 +12,18 @@ public class ComulatorController : BaseController
 {
     private readonly IComulator _comulator;
     private readonly IMappingServiceMessageSender _mappingServiceMessageSender;
+    private readonly IDescriptionServiceMessageSender _descriptionServiceMessageSender;
 
     public ComulatorController(
         IComulator comulator,
-        ILogger<ComulatorController> logger,
-        IMappingServiceMessageSender mappingServiceMessageSender) : base(logger)
+        IDescriptionServiceMessageSender descriptionServiceMessageSender,
+        IMappingServiceMessageSender mappingServiceMessageSender,
+        ILogger<ComulatorController> logger
+    )
+        : base(logger)
     {
         _comulator = comulator;
+        _descriptionServiceMessageSender = descriptionServiceMessageSender;
         _mappingServiceMessageSender = mappingServiceMessageSender;
     }
 
@@ -31,10 +36,14 @@ public class ComulatorController : BaseController
         var comulatedJobAds = (await _comulator.Comulate()).ToList();
 
         stopWatch.Stop();
-        Logger.LogInformation("Downloaded {JobAdsInserted} JobAds. Time elapsed: {ElapsedMilliseconds} ms", comulatedJobAds.Count, stopWatch.ElapsedMilliseconds);
-        
+        Logger.LogInformation(
+            "Downloaded {JobAdsInserted} JobAds. Time elapsed: {ElapsedMilliseconds} ms",
+            comulatedJobAds.Count,
+            stopWatch.ElapsedMilliseconds
+        );
+
         await _mappingServiceMessageSender.SendMappedJobAdsAsync(comulatedJobAds);
-        
+
         return Ok();
     }
 }
