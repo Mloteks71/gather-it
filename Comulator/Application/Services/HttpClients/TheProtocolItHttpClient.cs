@@ -48,7 +48,7 @@ public class TheProtocolItHttpClient : BaseJobBoardHttpClient, ITheProtocolItHtt
                 await Task.Delay(300);
                 var content = await base.GetJobsAsync(new Uri($"{_uri}{pageNumber}"), true, requestContent);
                 var response = await content.ReadFromJsonAsync<TheProtocolItResponse>();
-                
+
                 if (response?.Offers is not null)
                 {
                     theProtocolItResponse.Offers.AddRange(response.Offers);
