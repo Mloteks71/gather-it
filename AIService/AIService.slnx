@@ -1,6 +1,0 @@
-<Solution>
-  <Project Path="AIService.Application/AIService.Application.csproj" />
-  <Project Path="AIService.Infrastructure/AIService.Infrastructure.csproj" />
-  <Project Path="AIService.Tests/AIService.Tests.csproj" />
-  <Project Path="AIService/AIService.csproj" />
-</Solution>
