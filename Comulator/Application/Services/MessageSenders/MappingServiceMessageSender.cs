@@ -45,7 +45,7 @@ public class MappingServiceMessageSender : IMappingServiceMessageSender
         {
             var batch = batches[i].ToList();
             await _producingService.SendAsync(batch, _exchangeName, _routingKey);
-            
+
             _logger.LogInformation(
                 "Sent batch {BatchNumber}/{TotalBatches} ({Count} job ads) to mapping queue",
                 i + 1,

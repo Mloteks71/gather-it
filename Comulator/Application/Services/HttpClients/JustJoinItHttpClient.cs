@@ -60,8 +60,10 @@ public class JustJoinItHttpClient : BaseJobBoardHttpClient, IJustJoinItHttpClien
         }
 
         stopwatch.Stop();
-        Logger.LogInformation("Fetched {JobAdsCount} job ads from JustJoinIt in {ElapsedMilliseconds} ms", 
-            justJoinItResponse.Data.Count, stopwatch.ElapsedMilliseconds);
+        Logger.LogInformation(
+            "Fetched {JobAdsCount} job ads from JustJoinIt in {ElapsedMilliseconds} ms",
+            justJoinItResponse.Data.Count,
+            stopwatch.ElapsedMilliseconds);
 
         return justJoinItResponse;
     }

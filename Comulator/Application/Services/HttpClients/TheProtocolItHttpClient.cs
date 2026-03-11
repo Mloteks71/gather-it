@@ -57,8 +57,10 @@ public class TheProtocolItHttpClient : BaseJobBoardHttpClient, ITheProtocolItHtt
         }
 
         stopwatch.Stop();
-        Logger.LogInformation("Fetched {JobAdsCount} job ads from TheProtocolIt in {ElapsedMilliseconds} ms", 
-            theProtocolItResponse.Offers.Count, stopwatch.ElapsedMilliseconds);
+        Logger.LogInformation(
+            "Fetched {JobAdsCount} job ads from TheProtocolIt in {ElapsedMilliseconds} ms",
+            theProtocolItResponse.Offers.Count,
+            stopwatch.ElapsedMilliseconds);
 
         return theProtocolItResponse;
     }
