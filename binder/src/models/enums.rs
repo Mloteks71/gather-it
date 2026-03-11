@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize, sqlx::Type)]
+#[derive(Debug, Serialize, Deserialize, sqlx::Type, Clone, Copy)]
 #[serde(try_from = "u8")]
 #[sqlx(type_name = "job_site", rename_all = "snake_case")]
 pub enum JobSite {
@@ -36,7 +36,7 @@ pub enum ContractType {
     Replacement,
 }
 
-#[derive(Debug, Deserialize, sqlx::Type)]
+#[derive(Debug, Clone, Copy, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "workplace_type", rename_all = "snake_case")]
 pub enum WorkplaceType {
     Remote,
@@ -44,7 +44,7 @@ pub enum WorkplaceType {
     OnSite,
 }
 
-#[derive(Debug, Deserialize, sqlx::Type)]
+#[derive(Debug, Clone, Copy, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "experience_level", rename_all = "snake_case")]
 pub enum ExperienceLevel {
     Undefined,
@@ -52,12 +52,19 @@ pub enum ExperienceLevel {
     Mid,
     Senior,
     Any,
+    None,
 }
 
-#[derive(Debug, Deserialize, sqlx::Type)]
+#[derive(Debug, Clone, Copy, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "offer_status", rename_all = "snake_case")]
 pub enum OfferStatus {
     NewlyAdded,
     Active,
     Inactive,
+}
+
+impl Default for OfferStatus {
+    fn default() -> Self {
+        OfferStatus::NewlyAdded
+    }
 }

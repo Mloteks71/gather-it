@@ -1,8 +1,11 @@
 pub mod city;
 pub mod company;
+pub mod company_variant;
 pub mod description;
 pub mod enums;
 pub mod job_ad;
+pub mod job_ad_skill;
 pub mod messages;
 pub mod salary;
 pub mod skill;
+pub mod skill_variant;

@@ -11,6 +11,7 @@ sqlx = { version = "0.8.6", features = [
     "runtime-tokio",
     "macros",
     "chrono",
+    "json",
 ] }
 tokio = { version = "1.*", features = ["full"] }
 lapin = "4.1"
