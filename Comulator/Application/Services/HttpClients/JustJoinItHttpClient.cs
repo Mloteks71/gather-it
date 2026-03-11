@@ -23,7 +23,7 @@ public class JustJoinItHttpClient : BaseJobBoardHttpClient, IJustJoinItHttpClien
     {
         var stopwatch = new Stopwatch();
         stopwatch.Start();
-        
+
         var firstPage = new Uri($"{_uri}{1}");
         var content = await base.GetJobsAsync(firstPage);
         var justJoinItResponse = await content.ReadFromJsonAsync<JustJoinItResponse>();
@@ -60,8 +60,10 @@ public class JustJoinItHttpClient : BaseJobBoardHttpClient, IJustJoinItHttpClien
         }
 
         stopwatch.Stop();
-        Logger.LogInformation("Fetched {JobAdsCount} job ads from JustJoinIt in {ElapsedMilliseconds} ms", 
-            justJoinItResponse.Data.Count, stopwatch.ElapsedMilliseconds);
+        Logger.LogInformation(
+            "Fetched {JobAdsCount} job ads from JustJoinIt in {ElapsedMilliseconds} ms",
+            justJoinItResponse.Data.Count,
+            stopwatch.ElapsedMilliseconds);
 
         return justJoinItResponse;
     }

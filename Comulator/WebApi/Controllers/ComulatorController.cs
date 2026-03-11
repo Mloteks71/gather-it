@@ -31,10 +31,13 @@ public class ComulatorController : BaseController
         var comulatedJobAds = (await _comulator.Comulate()).ToList();
 
         stopWatch.Stop();
-        Logger.LogInformation("Downloaded {JobAdsInserted} JobAds. Time elapsed: {ElapsedMilliseconds} ms", comulatedJobAds.Count, stopWatch.ElapsedMilliseconds);
-        
+        Logger.LogInformation(
+            "Downloaded {JobAdsInserted} JobAds. Time elapsed: {ElapsedMilliseconds} ms",
+            комulatedJobAds.Count,
+            stopWatch.ElapsedMilliseconds);
+
         await _mappingServiceMessageSender.SendMappedJobAdsAsync(comulatedJobAds);
-        
+
         return Ok();
     }
 }
