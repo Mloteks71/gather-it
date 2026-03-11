@@ -24,7 +24,7 @@ public class TheProtocolItHttpClient : BaseJobBoardHttpClient, ITheProtocolItHtt
     {
         var stopwatch = new Stopwatch();
         stopwatch.Start();
-        
+
         var firstPage = new Uri($"{_uri}{1}");
         var requestContent = new StringContent("", Encoding.UTF8, "application/json");
         var responseContent = await base.GetJobsAsync(firstPage, true, requestContent);
