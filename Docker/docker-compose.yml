@@ -6,10 +6,6 @@ services:
       dockerfile: WebApi/Dockerfile
     ports:
       - "8080:8080"
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_HTTP_PORTS=8080
-      - ASPNETCORE_URLS=http://+:8080
     depends_on:
       postgres:
         condition: service_healthy
@@ -46,7 +42,7 @@ services:
     volumes:
       - database-postgres:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -66,7 +62,7 @@ services:
       - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json
       - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
     healthcheck:
-      test: [ "CMD-SHELL", "rabbitmq-diagnostics -q ping" ]
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
       interval: 10s
       timeout: 5s
       retries: 5

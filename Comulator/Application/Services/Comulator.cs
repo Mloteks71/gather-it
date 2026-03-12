@@ -9,13 +9,16 @@ public class Comulator : IComulator
     private readonly IJustJoinItHttpClient _justJoinItHttpClient;
     private readonly ITheProtocolItHttpClient _theProtocolItHttpClient;
 
-    public Comulator(IJustJoinItHttpClient justJoinItHttpClient, ITheProtocolItHttpClient theProtocolItHttpClient)
+    public Comulator(
+        IJustJoinItHttpClient justJoinItHttpClient,
+        ITheProtocolItHttpClient theProtocolItHttpClient
+    )
     {
         _justJoinItHttpClient = justJoinItHttpClient;
         _theProtocolItHttpClient = theProtocolItHttpClient;
     }
 
-    public async Task<IEnumerable<JobAdCreateDto>> Comulate()
+    public async Task<IEnumerable<CommonJobAdDto>> Comulate()
     {
         var justJoinItJobs = _justJoinItHttpClient.GetJobsAsync();
         var theProtocolItJobs = _theProtocolItHttpClient.GetJobsAsync();

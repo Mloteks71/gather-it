@@ -1,8 +1,10 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
 using Application.Interfaces;
+using Application.Models.Dtos;
 using Application.Models.Responses;
 using Application.Services.HttpClients;
+using Domain.Enums;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
@@ -17,6 +19,21 @@ public class JustJoinItHttpClientTests
     {
         var mock = new Mock<IConfigurationService>();
         mock.Setup(x => x.JustJoinItUrl).Returns(BaseUrl);
+        return mock.Object;
+    }
+
+    private static IResponseMapper GetResponseMapper()
+    {
+        var mock = new Mock<IResponseMapper>();
+        mock.Setup(x => x.MapJustJoinItResponse(It.IsAny<JustJoinItResponse>()))
+            .Returns((JustJoinItResponse r) => r.Data.Select(j => new CommonJobAdDto
+            {
+                Id = j.Slug,
+                Slug = j.Slug,
+                Title = j.Title,
+                CompanyName = j.CompanyName,
+                SourceSite = Site.JustJoinIt
+            }).ToList());
         return mock.Object;
     }
 
@@ -108,16 +125,16 @@ public class JustJoinItHttpClientTests
         var httpClient = CreateHttpClient(mockHandler.Object);
         var config = GetConfigurationService();
         var logger = new Mock<ILogger<JustJoinItHttpClient>>().Object;
+        var responseMapper = GetResponseMapper();
 
-        var sut = new JustJoinItHttpClient(httpClient, config, logger);
+        var sut = new JustJoinItHttpClient(httpClient, logger, config, responseMapper);
 
         // Act
         var jobs = await sut.GetJobsAsync();
 
         // Assert
         Assert.NotNull(jobs);
-        // Mapping to JobAdCreateDto not yet implemented
-        Assert.Empty(jobs);
+        Assert.Single(jobs);
     }
 
     [Fact]
@@ -147,8 +164,9 @@ public class JustJoinItHttpClientTests
         var httpClient = CreateHttpClient(mockHandler.Object);
         var config = GetConfigurationService();
         var logger = new Mock<ILogger<JustJoinItHttpClient>>().Object;
+        var responseMapper = GetResponseMapper();
 
-        var sut = new JustJoinItHttpClient(httpClient, config, logger);
+        var sut = new JustJoinItHttpClient(httpClient, logger, config, responseMapper);
 
         // Act
         var jobs = await sut.GetJobsAsync();
@@ -180,8 +198,9 @@ public class JustJoinItHttpClientTests
         var httpClient = CreateHttpClient(mockHandler.Object);
         var config = GetConfigurationService();
         var logger = new Mock<ILogger<JustJoinItHttpClient>>().Object;
+        var responseMapper = GetResponseMapper();
 
-        var sut = new JustJoinItHttpClient(httpClient, config, logger);
+        var sut = new JustJoinItHttpClient(httpClient, logger, config, responseMapper);
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(() => sut.GetJobsAsync());
@@ -204,8 +223,9 @@ public class JustJoinItHttpClientTests
         var httpClient = CreateHttpClient(mockHandler.Object);
         var config = GetConfigurationService();
         var logger = new Mock<ILogger<JustJoinItHttpClient>>().Object;
+        var responseMapper = GetResponseMapper();
 
-        var sut = new JustJoinItHttpClient(httpClient, config, logger);
+        var sut = new JustJoinItHttpClient(httpClient, logger, config, responseMapper);
 
         // Act
         var jobs = await sut.GetJobsAsync();

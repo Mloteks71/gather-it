@@ -8,7 +8,6 @@ public interface IConfigurationService
     string JustJoinItUrl { get; }
     string TheProtocolItUrl { get; }
     string SolidJobsUrl { get; }
-    string PostgresConnectionString { get; }
     string RabbitMqHostName { get; }
     int RabbitMqPort { get; }
     string RabbitMqUserName { get; }
