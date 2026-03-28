@@ -17,7 +17,7 @@ use crate::repositories::{
     skill_snapshot::SkillSnapshotRepository, skill_variant::SkillVariantRepository,
 };
 
-const IDLE_TIMEOUT: Duration = Duration::from_secs(5);
+const IDLE_TIMEOUT: Duration = Duration::from_secs(60);
 
 pub async fn bind(pool: &Pool<Postgres>, mut consumer: lapin::Consumer) -> color_eyre::Result<()> {
     let mut buffer: Vec<CommonJobAdDto> = Vec::new();
@@ -52,9 +52,7 @@ pub async fn bind(pool: &Pool<Postgres>, mut consumer: lapin::Consumer) -> color
                     .await?;
             }
             _ = tokio::time::sleep(IDLE_TIMEOUT) => {
-                println!("times up");
                 if buffer.is_empty() {
-                    info!("No messages received for {IDLE_TIMEOUT:?}, nothing to flush");
                     continue;
                 }
 
@@ -89,9 +87,6 @@ async fn upsert_data(data: Vec<CommonJobAdDto>, pool: &Pool<Postgres>) -> color_
         CompanyVariantRepository::get_all(pool),
         CompanySnapshotRepository::get_all(pool),
     )?;
-
-    println!("entering binding");
-    println!("data count: {}", data.len());
 
     let mut tx = pool.begin().await?;
 

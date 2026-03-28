@@ -1,4 +1,4 @@
-use std::sync::{LazyLock, OnceLock};
+use std::sync::OnceLock;
 
 use dotenvy::{from_filename, from_filename_override};
 
