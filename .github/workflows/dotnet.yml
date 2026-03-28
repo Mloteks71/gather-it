@@ -21,9 +21,9 @@ jobs:
       with:
         dotnet-version: 8.0.x
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore Comulator.sln
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build Comulator.sln --no-restore
       
   format:
   
@@ -37,7 +37,7 @@ jobs:
       with:
         dotnet-version: 8.0.x
     - name: Check code formatting with dotnet format
-      run: dotnet format --no-restore --verify-no-changes --severity warn --report ./format.json 
+      run: dotnet format Comulator.sln --no-restore --verify-no-changes --severity warn --report ./format.json 
 
   comulator-test:
     runs-on: ubuntu-latest
@@ -52,5 +52,5 @@ jobs:
         with:
           dotnet-version: 8.0.x
       - name: Running tests
-        run: dotnet test --verbosity normal
+        run: dotnet test Comulator.sln --verbosity normal
       
