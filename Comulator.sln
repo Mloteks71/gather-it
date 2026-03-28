@@ -12,11 +12,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.mcp.json = .mcp.json
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Application", "Comulator\Application\Application.csproj", "{123644AD-236C-4A9D-8279-EC9FD710951C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Application", "gatherIt\Application\Application.csproj", "{123644AD-236C-4A9D-8279-EC9FD710951C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApi", "Comulator\WebApi\WebApi.csproj", "{F0BA8B83-2A12-47DC-AB7B-FB6C50926B97}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApi", "gatherIt\WebApi\WebApi.csproj", "{F0BA8B83-2A12-47DC-AB7B-FB6C50926B97}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "Comulator\Tests\Tests.csproj", "{3567DB27-03EF-4E24-A788-17A55647EFD5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "gatherIt\Tests\Tests.csproj", "{3567DB27-03EF-4E24-A788-17A55647EFD5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
