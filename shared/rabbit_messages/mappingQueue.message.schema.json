@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "gather.it/shared/rabbit_messages/mappingQueue.message.schema.json",
+  "title": "RabbitMQ MappingQueue Message",
+  "description": "Message body consumed by Comulator from mapping_exchange -> MappingQueue.",
+  "type": "array",
+  "items": {
+    "$ref": "#/$defs/job"
+  },
+  "minItems": 1,
+  "$defs": {
+    "salaryRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Currency"
+      ],
+      "properties": {
+        "From": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "To": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "Currency": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ContractType": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "job": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Id",
+        "Slug",
+        "Title",
+        "CompanyName",
+        "SourceSite"
+      ],
+      "properties": {
+        "Id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "Slug": {
+          "type": "string",
+          "minLength": 1
+        },
+        "Title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "CompanyName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "SourceSite": {
+          "description": "Site enum value (currently serialized as integer).",
+          "type": "integer"
+        },
+        "Skills": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "WorkplaceTypes": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "ExperienceLevels": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "Locations": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "Salaries": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/$defs/salaryRange"
+          }
+        },
+        "PublishedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "LogoUrl": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri"
+        }
+      }
+    }
+  }
+}
