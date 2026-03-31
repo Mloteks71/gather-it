@@ -10,7 +10,7 @@ type SalaryRangeDto struct {
 }
 
 type JobDto struct {
-	Id               string           `json:"Id"`
+	ExternalId       string           `json:"ExternalId"`
 	Slug             string           `json:"Slug"`
 	Title            string           `json:"Title"`
 	CompanyName      string           `json:"CompanyName"`
