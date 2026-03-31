@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -20,15 +21,8 @@ const (
 )
 
 func main() {
-	rabbitMQURL := os.Getenv("RABBITMQ_URL")
-	if rabbitMQURL == "" {
-		rabbitMQURL = "amqp://rabbituser:rabbitpass@rabbitmq:5672/"
-	}
-
-	kafkaURL := os.Getenv("KAFKA_URL")
-	if kafkaURL == "" {
-		kafkaURL = "kafka:9092"
-	}
+	rabbitMQURL := getRequiredEnv("RABBITMQ_URL")
+	kafkaURL := getRequiredEnv("KAFKA_URL")
 
 	conn := connectToRabbitMQ(rabbitMQURL, 10, 3*time.Second)
 	defer conn.Close()
@@ -63,48 +57,57 @@ func main() {
 	stopChan := make(chan os.Signal, 1)
 	signal.Notify(stopChan, syscall.SIGINT, syscall.SIGTERM)
 
-	log.Printf("[*] Waiting for messages on %s. To exit press CTRL+C", queueName)
-
 	go func() {
 		for d := range msgs {
-			var jobs []model.JobDto
-			if err := json.Unmarshal(d.Body, &jobs); err != nil {
-				log.Printf("Error decoding JSON: %v", err)
-				d.Nack(false, false)
-				continue
-			}
-
-			messages := make([]kafka.Message, 0, len(jobs))
-			for _, job := range jobs {
-				payload, err := json.Marshal(job)
-				if err != nil {
-					log.Printf("Error serializing job %s: %v", job.Id, err)
-					d.Nack(false, false)
-					goto next
-				}
-				messages = append(messages, kafka.Message{
-					Key:   []byte(job.Id),
-					Value: payload,
-				})
-			}
-
-			if err := writer.WriteMessages(context.Background(), messages...); err != nil {
-				log.Printf("Failed to write to Kafka topic %s: %v", kafkaTopic, err)
-				d.Nack(false, true)
-				continue
-			}
-
-			log.Printf("Forwarded %d jobs individually to Kafka topic %s", len(jobs), kafkaTopic)
-
-			if err := d.Ack(false); err != nil {
-				log.Printf("Error acknowledging message: %v", err)
-			}
-		next:
+			handleDelivery(context.Background(), writer, d)
 		}
 	}()
 
 	<-stopChan
 	log.Println("Shutting down consumer...")
+}
+
+func handleDelivery(ctx context.Context, writer *kafka.Writer, d amqp.Delivery) {
+	var jobs []model.JobDto
+	if err := json.Unmarshal(d.Body, &jobs); err != nil {
+		log.Printf("Error decoding JSON: %v", err)
+		d.Nack(false, false)
+		return
+	}
+
+	messages := make([]kafka.Message, 0, len(jobs))
+	for _, job := range jobs {
+		payload, err := json.Marshal(job)
+		if err != nil {
+			log.Printf("Error serializing job %s: %v", job.ExternalId, err)
+			d.Nack(false, false)
+			return
+		}
+
+		messages = append(messages, kafka.Message{
+			Key:   []byte(job.ExternalId),
+			Value: payload,
+		})
+	}
+
+	if err := writer.WriteMessages(ctx, messages...); err != nil {
+		log.Printf("Failed to write to Kafka topic %s: %v", kafkaTopic, err)
+		d.Nack(false, true)
+		return
+	}
+
+	if err := d.Ack(false); err != nil {
+		log.Printf("Error acknowledging message: %v", err)
+	}
+}
+
+func getRequiredEnv(key string) string {
+	value, exists := os.LookupEnv(key)
+	if !exists || strings.TrimSpace(value) == "" {
+		log.Fatalf("Missing or empty required environment variable %s. Check your .env configuration.", key)
+	}
+
+	return value
 }
 
 func connectToRabbitMQ(rabbitMQURL string, maxRetries int, retryDelay time.Duration) *amqp.Connection {
