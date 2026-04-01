@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	model "gather.it/Comulator/internal/model"
+	model "gather.it/gatherit/internal/model"
 	amqp "github.com/rabbitmq/amqp091-go"
 	kafka "github.com/segmentio/kafka-go"
 )
@@ -35,7 +35,7 @@ func main() {
 
 	msgs, err := ch.Consume(
 		queueName,
-		"ComulatorConsumer",
+		"GatherItConsumer",
 		false, // auto-ack
 		false, // exclusive
 		false, // no-local

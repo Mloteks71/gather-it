@@ -1,4 +1,4 @@
-module gather.it/Comulator
+module gather.it/gatherit
 
 go 1.24.2
 

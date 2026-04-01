@@ -21,9 +21,9 @@ jobs:
       with:
         dotnet-version: 8.0.x
     - name: Restore dependencies
-      run: dotnet restore Comulator.sln
+      run: dotnet restore gatherIt.sln
     - name: Build
-      run: dotnet build Comulator.sln --no-restore
+      run: dotnet build gatherIt.sln --no-restore
       
   format:
   
@@ -37,7 +37,7 @@ jobs:
       with:
         dotnet-version: 8.0.x
     - name: Check code formatting with dotnet format
-      run: dotnet format Comulator.sln --no-restore --verify-no-changes --severity warn --report ./format.json 
+      run: dotnet format gatherIt.sln --no-restore --verify-no-changes --severity warn --report ./format.json 
 
   comulator-test:
     runs-on: ubuntu-latest
@@ -52,5 +52,4 @@ jobs:
         with:
           dotnet-version: 8.0.x
       - name: Running tests
-        run: dotnet test Comulator.sln --verbosity normal
-      
+        run: dotnet test gatherIt.sln --verbosity normal
