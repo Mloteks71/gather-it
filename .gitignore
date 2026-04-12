@@ -1602,5 +1602,6 @@ CLAUDE.md
 # Rust
 /target/
 /binder/target
+/scrapyard/pracuj-scraper/target
 /Comulator/.vscode
 /Comulator/consumer.exe
