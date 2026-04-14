@@ -1,7 +1,8 @@
-use color_eyre::eyre::{self, Result, WrapErr, bail};
+use color_eyre::eyre::{self, Result, bail};
+use futures::stream::{self, StreamExt};
 use scraper::{Html, Selector};
 use serde_json::Value;
-use tracing::info;
+use tracing::{info, warn};
 use wreq::Client;
 use wreq_util::Emulation;
 
@@ -10,6 +11,7 @@ use crate::models::response::JobOffer;
 mod models;
 
 const BASE_URL: &str = "https://it.pracuj.pl/praca";
+const PAGES_PER_BUFFER: usize = 10;
 const MAX_PAGES_SELECTOR: &str = "button.listing_n19df7xb:nth-child(6)";
 const SCRIPT_DATA_SELECTOR: &str = "script#__NEXT_DATA__";
 
@@ -21,21 +23,16 @@ fn build_client() -> Result<wreq::Client> {
     Ok(client)
 }
 
-async fn fetch_page(client: &Client, url: &str) -> Result<Html> {
+fn build_url(page_number: usize) -> String {
+    format!("https://it.pracuj.pl/praca?pn={page_number}")
+}
+
+async fn fetch_page(client: &Client, url: String) -> Result<Html> {
     info!(url, "fetching page");
-    let response = client
-        .get(url)
-        .send()
-        .await
-        .wrap_err_with(|| format!("request failed for {url}"))?;
 
-    let status = response.status();
+    let body = client.get(url).send().await?;
 
-    if !status.is_success() {
-        bail!("non-200 response for {url}: {status}");
-    }
-
-    Ok(Html::parse_document(response.text().await?.as_str()))
+    Ok(Html::parse_document(body.text().await?.as_str()))
 }
 
 fn get_total_pages(html: &Html) -> Result<usize> {
@@ -53,7 +50,7 @@ fn get_total_pages(html: &Html) -> Result<usize> {
 }
 
 // instead of scraping each individual offer separetely
-// we can find a <script> tag that contains all dthe data listed on the page and parse it
+// we can find a <script> tag that contains all the data listed on the page and parse it
 fn get_data_from_sript_tag(html: &Html) -> Result<Vec<JobOffer>> {
     let selector = Selector::parse(SCRIPT_DATA_SELECTOR).unwrap();
 
@@ -70,8 +67,6 @@ fn get_data_from_sript_tag(html: &Html) -> Result<Vec<JobOffer>> {
 
     let job_offers = serde_json::from_value::<Vec<JobOffer>>(v.clone())?;
 
-    println!("data from script tag: {:#?}", job_offers);
-
     info!(
         "successfully extracted data from script tag, found {} offers",
         job_offers.len()
@@ -87,13 +82,39 @@ async fn main() -> Result<()> {
 
     let client = build_client()?;
 
-    info!("fetching first listing page");
-    let first_page_html = fetch_page(&client, BASE_URL).await?;
+    let start = std::time::Instant::now();
+
+    let first_page_html = (fetch_page(&client, BASE_URL.to_string()).await)?;
 
     let total_pages = get_total_pages(&first_page_html)?;
+
     info!(total_pages, "discovered total pages");
 
-    let _offers = get_data_from_sript_tag(&first_page_html)?;
+    let mut offers = get_data_from_sript_tag(&first_page_html)?;
+
+    let pages_to_fetch = stream::iter(2..=total_pages)
+        .map(|page_number| fetch_page(&client, build_url(page_number)))
+        .buffer_unordered(PAGES_PER_BUFFER)
+        .collect::<Vec<_>>()
+        .await;
+
+    for resp in pages_to_fetch.iter() {
+        match resp {
+            Ok(html) => match get_data_from_sript_tag(html) {
+                Ok(mut jobs) => offers.append(&mut jobs),
+                Err(e) => warn!("error while deserializing data {e}"),
+            },
+            Err(e) => warn!("error while fetching data {e}"),
+        }
+    }
+
+    let end = std::time::Instant::now();
+
+    info!(
+        "scraped: {} in {}ms",
+        offers.len(),
+        std::time::Duration::as_millis(&(end - start))
+    );
 
     return Ok(());
 }
