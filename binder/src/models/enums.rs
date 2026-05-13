@@ -7,6 +7,7 @@ pub enum JobSite {
     JustJoinIt,
     TheProtocolIt,
     SolidJobs,
+    PracujPl,
 }
 
 impl TryFrom<u8> for JobSite {
@@ -17,6 +18,7 @@ impl TryFrom<u8> for JobSite {
             0 => Ok(JobSite::JustJoinIt),
             1 => Ok(JobSite::TheProtocolIt),
             2 => Ok(JobSite::SolidJobs),
+            3 => Ok(JobSite::PracujPl),
             _ => Err(format!("Unknown JobSite value: {value}")),
         }
     }

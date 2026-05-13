@@ -7,5 +7,6 @@ public enum Site
 {
     JustJoinIt,
     TheProtocolIt,
-    SolidJobs
+    SolidJobs,
+    PracujPl
 }

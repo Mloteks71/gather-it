@@ -1,6 +1,6 @@
 BEGIN;
 
-CREATE TYPE job_site AS ENUM ('just_join_it', 'the_protocol_it', 'solid_jobs');
+CREATE TYPE job_site AS ENUM ('just_join_it', 'the_protocol_it', 'solid_jobs', 'pracuj_pl');
 CREATE TYPE contract_type AS ENUM ('undefined', 'uop', 'b2b', 'uz', 'any', 'internship', 'contract', 'replacement');
 CREATE TYPE workplace_type AS ENUM ('remote', 'hybrid', 'on_site');
 CREATE TYPE experience_level AS ENUM ('undefined', 'junior', 'mid', 'senior', 'any');
