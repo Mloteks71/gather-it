@@ -16,7 +16,13 @@ async fn main() -> color_eyre::Result<()> {
     info!("Starting application");
 
     let pool = setup_postgres().await?;
+    info!("Connected to PostgreSQL database");
+
     let consumer = setup_rmq().await?;
+    info!(
+        "Connected to RabbitMQ and consuming from queue: {}",
+        config().rabbitmq_queue_name
+    );
 
     bind::bind(&pool, consumer).await?;
 
@@ -31,8 +37,9 @@ fn setup_tracing() -> tracing_appender::non_blocking::WorkerGuard {
 
     tracing_subscriber::registry()
         .with(EnvFilter::from_default_env())
-        // for stdout logs
+        // terminal
         // .with(fmt::layer().with_writer(std::io::stdout))
+        // file
         .with(fmt::layer().with_writer(non_blocking).with_ansi(false))
         .init();
 

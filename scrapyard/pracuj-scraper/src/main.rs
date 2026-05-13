@@ -9,6 +9,7 @@ use wreq_util::Emulation;
 use crate::models::response::JobOffer;
 
 mod models;
+mod rabbitmq;
 
 const BASE_URL: &str = "https://it.pracuj.pl/praca";
 const PAGES_PER_BUFFER: usize = 10;
@@ -35,7 +36,7 @@ async fn fetch_page(client: &Client, url: String) -> Result<Html> {
     Ok(Html::parse_document(body.text().await?.as_str()))
 }
 
-fn get_total_pages(html: &Html) -> Result<usize> {
+fn get_number_of_pages(html: &Html) -> Result<usize> {
     let Ok(selector) = Selector::parse(MAX_PAGES_SELECTOR) else {
         bail!("failed to parse pagination button selector");
     };
@@ -78,21 +79,26 @@ fn get_data_from_sript_tag(html: &Html) -> Result<Vec<JobOffer>> {
 #[tokio::main]
 async fn main() -> Result<()> {
     color_eyre::install()?;
+    let _ = dotenvy::dotenv();
     tracing_subscriber::fmt::init();
+
+    let rabbitmq_url = std::env::var("RABBITMQ_URL").expect("RABBITMQ_URL must be set");
 
     let client = build_client()?;
 
-    let start = std::time::Instant::now();
+    rabbitmq::setup_rmq(&rabbitmq_url).await?;
+
+    let start_timer = std::time::Instant::now();
 
     let first_page_html = (fetch_page(&client, BASE_URL.to_string()).await)?;
 
-    let total_pages = get_total_pages(&first_page_html)?;
+    let number_of_pages = get_number_of_pages(&first_page_html)?;
 
-    info!(total_pages, "discovered total pages");
+    info!(number_of_pages, "discovered total pages");
 
     let mut offers = get_data_from_sript_tag(&first_page_html)?;
 
-    let pages_to_fetch = stream::iter(2..=total_pages)
+    let pages_to_fetch = stream::iter(2..=number_of_pages)
         .map(|page_number| fetch_page(&client, build_url(page_number)))
         .buffer_unordered(PAGES_PER_BUFFER)
         .collect::<Vec<_>>()
@@ -108,13 +114,15 @@ async fn main() -> Result<()> {
         }
     }
 
-    let end = std::time::Instant::now();
+    let end_timer = std::time::Instant::now();
 
     info!(
         "scraped: {} in {}ms",
         offers.len(),
-        std::time::Duration::as_millis(&(end - start))
+        std::time::Duration::as_millis(&(end_timer - start_timer))
     );
 
-    return Ok(());
+    rabbitmq::publish_offers(&offers, &rabbitmq_url).await?;
+
+    Ok(())
 }
