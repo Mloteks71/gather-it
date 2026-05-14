@@ -9,6 +9,7 @@ pub struct Config {
     pub rabbitmq_queue_name: String,
     pub rabbitmq_consumer_tag: String,
     pub database_url: String,
+    pub log_target: String,
 }
 
 impl Config {
@@ -23,6 +24,7 @@ impl Config {
             rabbitmq_consumer_tag: std::env::var("RABBITMQ_CONSUMER_TAG")
                 .expect("RABBITMQ_CONSUMER_TAG must be set"),
             database_url: std::env::var("DATABASE_URL").expect("DATABASE_URL must be set"),
+            log_target: std::env::var("LOG_TARGET").unwrap_or_else(|_| "stdout".to_string()),
         }
     }
 }

@@ -86,7 +86,7 @@ async fn main() -> Result<()> {
 
     let client = build_client()?;
 
-    rabbitmq::setup_rmq(&rabbitmq_url).await?;
+    let channel = rabbitmq::setup_rmq(&rabbitmq_url).await?;
 
     let start_timer = std::time::Instant::now();
 
@@ -122,7 +122,7 @@ async fn main() -> Result<()> {
         std::time::Duration::as_millis(&(end_timer - start_timer))
     );
 
-    rabbitmq::publish_offers(&offers, &rabbitmq_url).await?;
+    rabbitmq::publish_offers(&channel, &offers).await?;
 
     Ok(())
 }
