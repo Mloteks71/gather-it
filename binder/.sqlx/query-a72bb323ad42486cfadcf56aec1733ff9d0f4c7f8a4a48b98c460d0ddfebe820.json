@@ -1,0 +1,70 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE job_ad\n            SET title = $1,\n                workplace_type = $2,\n                experience_level = $3,\n                slug = $4,\n                published_at = $5,\n                company_id = $6,\n                offer_status = $7\n            WHERE job_ad_id = $8",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        {
+          "Custom": {
+            "name": "workplace_type[]",
+            "kind": {
+              "Array": {
+                "Custom": {
+                  "name": "workplace_type",
+                  "kind": {
+                    "Enum": [
+                      "remote",
+                      "hybrid",
+                      "on_site"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "Custom": {
+            "name": "experience_level[]",
+            "kind": {
+              "Array": {
+                "Custom": {
+                  "name": "experience_level",
+                  "kind": {
+                    "Enum": [
+                      "undefined",
+                      "junior",
+                      "mid",
+                      "senior",
+                      "any"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "Varchar",
+        "Timestamptz",
+        "Int4",
+        {
+          "Custom": {
+            "name": "offer_status",
+            "kind": {
+              "Enum": [
+                "newly_added",
+                "active",
+                "inactive"
+              ]
+            }
+          }
+        },
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a72bb323ad42486cfadcf56aec1733ff9d0f4c7f8a4a48b98c460d0ddfebe820"
+}

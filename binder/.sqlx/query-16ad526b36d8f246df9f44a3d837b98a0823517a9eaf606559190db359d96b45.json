@@ -1,0 +1,91 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO job_ad (external_id, title, offer_status, workplace_type, experience_level, company_id, job_site, slug, published_at)\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)\n            RETURNING job_ad_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "job_ad_id",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Varchar",
+        {
+          "Custom": {
+            "name": "offer_status",
+            "kind": {
+              "Enum": [
+                "newly_added",
+                "active",
+                "inactive"
+              ]
+            }
+          }
+        },
+        {
+          "Custom": {
+            "name": "workplace_type[]",
+            "kind": {
+              "Array": {
+                "Custom": {
+                  "name": "workplace_type",
+                  "kind": {
+                    "Enum": [
+                      "remote",
+                      "hybrid",
+                      "on_site"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "Custom": {
+            "name": "experience_level[]",
+            "kind": {
+              "Array": {
+                "Custom": {
+                  "name": "experience_level",
+                  "kind": {
+                    "Enum": [
+                      "undefined",
+                      "junior",
+                      "mid",
+                      "senior",
+                      "any"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "Int4",
+        {
+          "Custom": {
+            "name": "job_site",
+            "kind": {
+              "Enum": [
+                "just_join_it",
+                "the_protocol_it",
+                "solid_jobs",
+                "pracuj_pl"
+              ]
+            }
+          }
+        },
+        "Varchar",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "16ad526b36d8f246df9f44a3d837b98a0823517a9eaf606559190db359d96b45"
+}

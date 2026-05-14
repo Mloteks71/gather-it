@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE company_snapshot\n            SET job_ad_ids = array_append(job_ad_ids, $1)\n            WHERE company_snapshot_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2868359d4c826b6b9da5ce8884453d6ce8cac124a1fac299e30329530ce5f4d6"
+}

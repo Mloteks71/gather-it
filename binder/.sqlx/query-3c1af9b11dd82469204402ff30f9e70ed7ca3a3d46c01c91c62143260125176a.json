@@ -1,0 +1,147 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT\n                ja.job_ad_id,\n                ja.external_id,\n                ja.title,\n                ja.offer_status as \"offer_status: OfferStatus\",\n                ja.workplace_type as \"workplace_type: Vec<WorkplaceType>\",\n                ja.experience_level as \"experience_level: Vec<ExperienceLevel>\",\n                ja.company_id,\n                ja.job_site as \"job_site: JobSite\",\n                ja.slug,\n                ja.expired_at,\n                ja.published_at,\n                COALESCE(\n                    (SELECT json_agg(json_build_object('skill_id', s.skill_id, 'name', s.name))\n                     FROM job_ad_skill jas\n                     JOIN skill s ON jas.skill_id = s.skill_id\n                     WHERE jas.job_ad_id = ja.job_ad_id),\n                    '[]'::json\n                ) as \"skills!: Json<Vec<Skill>>\"\n            FROM job_ad ja",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "job_ad_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "external_id",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "title",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "offer_status: OfferStatus",
+        "type_info": {
+          "Custom": {
+            "name": "offer_status",
+            "kind": {
+              "Enum": [
+                "newly_added",
+                "active",
+                "inactive"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "workplace_type: Vec<WorkplaceType>",
+        "type_info": {
+          "Custom": {
+            "name": "workplace_type[]",
+            "kind": {
+              "Array": {
+                "Custom": {
+                  "name": "workplace_type",
+                  "kind": {
+                    "Enum": [
+                      "remote",
+                      "hybrid",
+                      "on_site"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "experience_level: Vec<ExperienceLevel>",
+        "type_info": {
+          "Custom": {
+            "name": "experience_level[]",
+            "kind": {
+              "Array": {
+                "Custom": {
+                  "name": "experience_level",
+                  "kind": {
+                    "Enum": [
+                      "undefined",
+                      "junior",
+                      "mid",
+                      "senior",
+                      "any"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "company_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 7,
+        "name": "job_site: JobSite",
+        "type_info": {
+          "Custom": {
+            "name": "job_site",
+            "kind": {
+              "Enum": [
+                "just_join_it",
+                "the_protocol_it",
+                "solid_jobs",
+                "pracuj_pl"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "slug",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 9,
+        "name": "expired_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 10,
+        "name": "published_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 11,
+        "name": "skills!: Json<Vec<Skill>>",
+        "type_info": "Json"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      true,
+      true,
+      null
+    ]
+  },
+  "hash": "3c1af9b11dd82469204402ff30f9e70ed7ca3a3d46c01c91c62143260125176a"
+}

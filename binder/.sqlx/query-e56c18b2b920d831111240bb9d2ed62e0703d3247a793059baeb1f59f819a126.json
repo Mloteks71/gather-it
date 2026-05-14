@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO job_ad_skill (job_ad_id, skill_id)\n            VALUES ($1, $2)\n            ON CONFLICT (job_ad_id, skill_id) DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e56c18b2b920d831111240bb9d2ed62e0703d3247a793059baeb1f59f819a126"
+}

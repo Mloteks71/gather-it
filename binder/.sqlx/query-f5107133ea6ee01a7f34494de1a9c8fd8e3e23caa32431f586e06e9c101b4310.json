@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT job_ad_id, skill_id FROM job_ad_skill WHERE skill_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "job_ad_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "skill_id",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "f5107133ea6ee01a7f34494de1a9c8fd8e3e23caa32431f586e06e9c101b4310"
+}
