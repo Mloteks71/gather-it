@@ -1,0 +1,32 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT * FROM skill_variant",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "skill_variant_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "skill_id",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "ba6daa26d5c0386c38edb5d09e2b7b28df814f454fc583b5c005e65da375351b"
+}

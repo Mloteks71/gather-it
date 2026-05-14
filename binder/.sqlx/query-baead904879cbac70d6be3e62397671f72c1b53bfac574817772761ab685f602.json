@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE job_ad SET offer_status = 'inactive' WHERE job_ad_id = ANY($1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "baead904879cbac70d6be3e62397671f72c1b53bfac574817772761ab685f602"
+}

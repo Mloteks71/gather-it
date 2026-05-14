@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO skill_snapshot (name, job_ad_ids)\n            VALUES ($1, $2)\n            RETURNING skill_snapshot_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "skill_snapshot_id",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Int4Array"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "cfee1e7da3a3554186065b35577191ba6e40ed62a184415483192362035ca087"
+}

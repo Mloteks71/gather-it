@@ -1,0 +1,32 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT * FROM skill_snapshot",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "skill_snapshot_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "job_ad_ids",
+        "type_info": "Int4Array"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "363f278c7378ea0e230aa54885a4ef608288615ec7ccad4964f6a5c35014b56f"
+}
