@@ -1,0 +1,34 @@
+name: Rust
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+
+jobs:
+  build-binder:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build binder
+        run: cargo build
+        working-directory: binder
+      - name: Clippy binder
+        run: cargo clippy -- -D warnings
+        working-directory: binder
+
+  build-pracuj-scraper:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build pracuj-scraper
+        run: cargo build
+        working-directory: scrapyard/pracuj-scraper
+      - name: Clippy pracuj-scraper
+        run: cargo clippy -- -D warnings
+        working-directory: scrapyard/pracuj-scraper
