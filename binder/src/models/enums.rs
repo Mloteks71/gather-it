@@ -59,14 +59,11 @@ pub enum ExperienceLevel {
 
 #[derive(Debug, Clone, Copy, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "offer_status", rename_all = "snake_case")]
+#[derive(Default)]
 pub enum OfferStatus {
+    #[default]
     NewlyAdded,
     Active,
     Inactive,
 }
 
-impl Default for OfferStatus {
-    fn default() -> Self {
-        OfferStatus::NewlyAdded
-    }
-}

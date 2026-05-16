@@ -1,3 +1,5 @@
+#![warn(clippy::all, clippy::pedantic)]
+#![allow(clippy::struct_field_names)]
 use color_eyre::eyre::{self, Result, bail};
 use futures::stream::{self, StreamExt};
 use scraper::{Html, Selector};
@@ -104,7 +106,7 @@ async fn main() -> Result<()> {
         .collect::<Vec<_>>()
         .await;
 
-    for resp in pages_to_fetch.iter() {
+    for resp in &pages_to_fetch {
         match resp {
             Ok(html) => match get_data_from_sript_tag(html) {
                 Ok(mut jobs) => offers.append(&mut jobs),
