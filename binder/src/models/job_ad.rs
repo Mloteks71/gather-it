@@ -5,7 +5,7 @@ use sqlx::FromRow;
 use crate::models::messages::CommonJobAdDto;
 use crate::models::skill::Skill;
 
-use super::enums::{ExperienceLevel, JobSite, OfferStatus, WorkplaceType};
+use crate::models::enums::{ExperienceLevel, JobSite, OfferStatus, WorkplaceType};
 
 #[derive(Debug, FromRow, Deserialize)]
 pub struct JobAd {
@@ -43,11 +43,7 @@ impl NewJobAd {
         let workplace_type = cjad
             .workplace_types
             .as_ref()
-            .map(|wts| {
-                wts.iter()
-                    .filter_map(|s| parse_workplace_type(s))
-                    .collect()
-            })
+            .map(|wts| wts.iter().filter_map(|s| parse_workplace_type(s)).collect())
             .unwrap_or_default();
 
         let experience_level = cjad
