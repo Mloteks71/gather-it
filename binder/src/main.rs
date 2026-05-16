@@ -1,8 +1,13 @@
+#![allow(dead_code)]
+#![warn(clippy::all, clippy::pedantic)]
+#![allow(clippy::struct_field_names)]
+
 mod bind;
 mod config;
 mod models;
 mod repositories;
 
+use lapin::types::FieldTable;
 use sqlx::{Postgres, postgres::PgPoolOptions};
 use tracing::info;
 use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt};
@@ -72,7 +77,7 @@ async fn setup_rmq() -> color_eyre::Result<lapin::Consumer> {
             config().rabbitmq_queue_name.clone().into(),
             config().rabbitmq_consumer_tag.clone().into(),
             consumer_options,
-            Default::default(),
+            FieldTable::default(),
         )
         .await?)
 }
