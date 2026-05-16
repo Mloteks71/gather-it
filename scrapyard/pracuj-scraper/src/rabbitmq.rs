@@ -25,8 +25,8 @@ pub async fn setup_rmq(rabbitmq_url: &str) -> Result<Channel> {
         )
         .await
     {
-        Ok(_) => info!("Connected to '{}' exchange", exchange),
-        Err(_) => panic!("'{}' exchange does not exist", exchange),
+        Ok(()) => info!("Connected to '{}' exchange", exchange),
+        Err(e) => panic!("'{exchange}' exchange does not exist: {e}"),
     }
 
     Ok(channel)

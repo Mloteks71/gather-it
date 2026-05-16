@@ -43,11 +43,10 @@ fn non_empty(v: Vec<String>) -> Option<Vec<String>> {
 }
 
 pub fn map_offer(offer: &JobOffer) -> CommonJobAdDto {
-    let slug = offer
-        .offers
-        .first()
-        .map(|o| extract_slug(&o.offer_absolute_uri))
-        .unwrap_or_else(|| offer.group_id.clone());
+    let slug = offer.offers.first().map_or_else(
+        || offer.group_id.clone(),
+        |o| extract_slug(&o.offer_absolute_uri),
+    );
 
     let locations: Vec<String> = offer
         .offers

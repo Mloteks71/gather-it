@@ -17,7 +17,7 @@ use crate::repositories::{
     skill_snapshot::SkillSnapshotRepository, skill_variant::SkillVariantRepository,
 };
 
-const IDLE_TIMEOUT: Duration = Duration::from_secs(60);
+const IDLE_TIMEOUT: Duration = Duration::from_mins(1);
 
 pub async fn bind(pool: &Pool<Postgres>, mut consumer: lapin::Consumer) -> color_eyre::Result<()> {
     let mut buffer: Vec<CommonJobAdDto> = Vec::new();
@@ -51,7 +51,7 @@ pub async fn bind(pool: &Pool<Postgres>, mut consumer: lapin::Consumer) -> color
                     .ack(lapin::options::BasicAckOptions::default())
                     .await?;
             }
-            _ = tokio::time::sleep(IDLE_TIMEOUT) => {
+            () = tokio::time::sleep(IDLE_TIMEOUT) => {
                 if buffer.is_empty() {
                     continue;
                 }
@@ -69,6 +69,7 @@ pub async fn bind(pool: &Pool<Postgres>, mut consumer: lapin::Consumer) -> color
     Ok(())
 }
 
+#[allow(clippy::too_many_lines)]
 async fn upsert_data(data: Vec<CommonJobAdDto>, pool: &Pool<Postgres>) -> color_eyre::Result<()> {
     let (
         all_job_ads,
