@@ -1600,8 +1600,6 @@ CLAUDE.md
 
 
 # Rust
-/target/
-/binder/target
-/scrapyard/pracuj-scraper/target
+**/target
 /Comulator/.vscode
 /Comulator/consumer.exe
