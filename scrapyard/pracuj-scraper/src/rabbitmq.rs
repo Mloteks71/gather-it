@@ -7,10 +7,11 @@ use tracing::info;
 use crate::models::message::{CommonJobAdDto, map_offer};
 use crate::models::response::JobOffer;
 
-pub async fn setup_rmq(rabbitmq_url: &str) -> Result<Channel> {
+pub async fn setup_rmq() -> Result<Channel> {
+    let rabbitmq_url = std::env::var("RABBITMQ_URL").expect("RABBITMQ_URL must be set");
     let exchange = std::env::var("RABBITMQ_EXCHANGE").expect("RABBITMQ_EXCHANGE must be set");
 
-    let conn = Connection::connect(rabbitmq_url, ConnectionProperties::default()).await?;
+    let conn = Connection::connect(&rabbitmq_url, ConnectionProperties::default()).await?;
     let channel = conn.create_channel().await?;
 
     match channel

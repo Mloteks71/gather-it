@@ -18,3 +18,4 @@ wreq-util = "2"
 futures = "0.3.32"
 lapin = "4.1"
 dotenvy = "0.15"
+axum = { version = "0.8.9", features = ["macros"] }
