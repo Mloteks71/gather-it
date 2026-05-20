@@ -4,8 +4,8 @@ use lapin::{
 };
 use tracing::info;
 
-use crate::models::message::{CommonJobAdDto, map_offer};
-use crate::models::response::JobOffer;
+use crate::models::pracujpl_response::JobOffer;
+use crate::models::rmq_message::{CommonJobAdDto, map_offer};
 
 pub async fn setup_rmq() -> Result<Channel> {
     let rabbitmq_url = std::env::var("RABBITMQ_URL").expect("RABBITMQ_URL must be set");
