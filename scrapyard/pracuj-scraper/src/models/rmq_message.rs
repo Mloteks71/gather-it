@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use super::response::JobOffer;
+use super::pracujpl_response::JobOffer;
 
 const PRACUJ_PL_SITE: u8 = 3;
 
