@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use crate::{models::pracujpl_response::JobOffer, rabbitmq};
 use color_eyre::eyre::{self, Result, bail};
 use scraper::{Html, Selector};
 use serde_json::Value;
@@ -8,7 +9,6 @@ use tracing::{info, warn};
 use wreq::Client;
 use wreq_util::Emulation;
 
-use crate::{models::pracujpl_response::JobOffer, rabbitmq};
 const BASE_URL: &str = "https://it.pracuj.pl/praca";
 const PAGES_PER_BUFFER: usize = 10;
 const MAX_PAGES_SELECTOR: &str = "button.listing_n19df7xb:nth-child(6)";
