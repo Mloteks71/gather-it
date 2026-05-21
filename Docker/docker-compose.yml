@@ -88,6 +88,22 @@ services:
       timeout: 5s
       retries: 5
 
+  binder:
+    build:
+      context: ../binder
+      dockerfile: Dockerfile
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres-jobads:
+        condition: service_healthy
+    environment:
+      - RABBITMQ_URL=amqp://rabbituser:rabbitpass@rabbitmq:5672/%2f
+      - RABBITMQ_QUEUE_NAME=MappingQueue
+      - RABBITMQ_CONSUMER_TAG=binder
+      - DATABASE_URL=postgres://postgres:pL5dT78Uyu@postgres-jobads:5432/postgres
+      - RUST_LOG=info
+
   postgres-scheduler:
     build:
       context: ../scheduler/database

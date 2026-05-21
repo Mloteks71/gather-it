@@ -17,7 +17,8 @@ use crate::config::config;
 #[tokio::main]
 async fn main() -> color_eyre::Result<()> {
     config();
-    let _guard = setup_tracing();
+    tracing_subscriber::fmt::init();
+    // let _guard = setup_tracing();
     info!("Starting application");
 
     let pool = setup_postgres().await?;
