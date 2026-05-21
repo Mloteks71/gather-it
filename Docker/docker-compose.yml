@@ -1,3 +1,5 @@
+name: gather-it
+
 services:
   webapi:
     image: ${DOCKER_REGISTRY-}webapi
@@ -5,9 +7,9 @@ services:
       context: ../gatherIt
       dockerfile: WebApi/Dockerfile
     ports:
-      - "8080:8080"
+      - "8001:8001"
     depends_on:
-      postgres:
+      postgres-jobads:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
@@ -25,20 +27,80 @@ services:
       - RABBITMQ_URL=amqp://rabbituser:rabbitpass@rabbitmq:5672/
       - KAFKA_URL=kafka:9092
 
-  postgres:
+  postgres-jobads:
     build:
       context: ../Database
       dockerfile: Dockerfile-database
-    image: postgres:17-alpine
     restart: always
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: pL5dT78Uyu
       POSTGRES_DB: postgres
     ports:
-      - "5432:5432"
+      - "5400:5432"
     volumes:
-      - database-postgres:/var/lib/postgresql/data
+      - database-postgres-jobads:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  scheduler:
+    build:
+      context: ../scheduler
+      dockerfile: Dockerfile
+    ports:
+      - "8101:8101"
+    depends_on:
+      postgres-scheduler:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgres://postgres:pL5dT78Uyu@postgres-scheduler:5432/postgres
+    healthcheck:
+      test:
+        ["CMD-SHELL", "wget -qO- http://127.0.0.1:8101/healthcheck || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pracuj-scraper:
+    build:
+      context: ../scrapyard/pracuj-scraper
+      dockerfile: Dockerfile
+    ports:
+      - "8800:8800"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      scheduler:
+        condition: service_healthy
+    environment:
+      - RABBITMQ_URL=amqp://rabbituser:rabbitpass@rabbitmq:5672/
+      - RABBITMQ_EXCHANGE=mapping_exchange
+      - RABBITMQ_ROUTING_KEY=mapping
+      - SCHEDULER_URL=http://scheduler:8101/register-scraper
+      - SCRAPER_ENDPOINT=http://pracuj-scraper:8800/scrap
+    healthcheck:
+      test:
+        ["CMD-SHELL", "wget -qO- http://127.0.0.1:8800/healthcheck || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-scheduler:
+    build:
+      context: ../scheduler/database
+      dockerfile: Dockerfile-database
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: pL5dT78Uyu
+      POSTGRES_DB: postgres
+    ports:
+      - "5401:5432"
+    volumes:
+      - database-postgres-scheduler:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -89,7 +151,11 @@ services:
     volumes:
       - kafka-data:/var/lib/kafka/data
     healthcheck:
-      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list > /dev/null 2>&1"]
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list > /dev/null 2>&1",
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -105,6 +171,7 @@ services:
     restart: "no"
 
 volumes:
-  database-postgres:
+  database-postgres-jobads:
+  database-postgres-scheduler:
   rabbitmq-data:
   kafka-data:
