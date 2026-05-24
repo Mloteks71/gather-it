@@ -3,8 +3,9 @@ use sqlx::FromRow;
 
 #[allow(dead_code)]
 #[derive(Debug, FromRow, Deserialize)]
-pub struct RegisteredScraper {
+pub struct Worker {
     pub id: i32,
+    pub external_id: String,
     pub endpoint: String,
-    pub timeout: i32,
+    pub interval: i32,
 }

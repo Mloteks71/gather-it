@@ -8,7 +8,7 @@ use axum::{
 use sqlx::Postgres;
 use tracing::{info, warn};
 
-use crate::repositories::registered_scraper;
+use crate::repositories::worker;
 
 mod config;
 mod enums;
@@ -44,7 +44,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/healthcheck", get(healthcheck))
-        .route("/register-scraper", post(register_scraper))
+        .route("/register", post(register))
         .with_state(shared_state);
 
     let listener = tokio::net::TcpListener::bind(format!("{HOST}:{PORT}"))
@@ -58,7 +58,6 @@ async fn main() {
 
     let bg_job = tokio::spawn(async {
         tracing::info!("Background service started");
-        // scheduler::start_scheduler().await;
     });
 
     let _ = tokio::try_join!(server, bg_job);
@@ -68,43 +67,40 @@ async fn healthcheck() -> &'static str {
     "OK"
 }
 
-async fn register_scraper(
+async fn register(
     axum::extract::State(state): axum::extract::State<AppState>,
-    Json(payload): Json<crate::models::register_scraper::RegisterScraper>,
+    Json(payload): Json<crate::models::register_worker::RegisterWorker>,
 ) -> StatusCode {
     let mut transaction = match state.pool.begin().await {
         Ok(txn) => txn,
         Err(e) => {
             warn!(
-                "Failed to begin transaction for scraper id: {}, error: {}",
+                "Failed to begin transaction for worker id: {}, error: {}",
                 payload.id, e
             );
             return StatusCode::INTERNAL_SERVER_ERROR;
         }
     };
 
-    match registered_scraper::is_scraper_registered(&mut *transaction, &payload.id).await {
+    match worker::is_worker_registered(&mut *transaction, &payload.id).await {
         Ok(true) => return StatusCode::CONFLICT,
         Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
         Ok(false) => {}
     }
 
-    let Ok(()) = registered_scraper::register_scraper(&mut *transaction, &payload).await else {
-        warn!("Failed to register scraper with id: {}", payload.id);
+    let Ok(()) = worker::register_worker(&mut *transaction, &payload).await else {
+        warn!("Failed to register with id: {}", payload.id);
         return StatusCode::INTERNAL_SERVER_ERROR;
     };
 
     if transaction.commit().await.is_err() {
-        warn!(
-            "Failed to commit transaction for scraper id: {}",
-            payload.id
-        );
+        warn!("Failed to commit transaction for worker id: {}", payload.id);
         return StatusCode::INTERNAL_SERVER_ERROR;
     }
 
     info!(
-        "Registered scraper with id: {}, url: {}, timeout: {}",
-        payload.id, payload.endpoint, payload.timeout
+        "Registered worker with id: {}, url: {}, interval: {}",
+        payload.id, payload.endpoint, payload.interval
     );
     StatusCode::OK
 }

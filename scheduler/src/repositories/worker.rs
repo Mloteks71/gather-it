@@ -1,19 +1,18 @@
-use crate::models::{register_scraper::RegisterScraper, registered_scraper::RegisteredScraper};
+use crate::models::{register_worker::RegisterWorker, worker::Worker};
 
 #[allow(dead_code)]
-pub async fn get_all_registered_scrapers<'e, E>(
-    executor: E,
-) -> Result<Vec<RegisteredScraper>, sqlx::Error>
+pub async fn get_all_workers<'e, E>(executor: E) -> Result<Vec<Worker>, sqlx::Error>
 where
     E: sqlx::Executor<'e, Database = sqlx::Postgres>,
 {
     let result = sqlx::query_as!(
-        RegisteredScraper,
+        Worker,
         r"SELECT
             id,
+            external_id,
             endpoint,
-            timeout
-        FROM registered_scraper",
+            interval
+        FROM worker",
     )
     .fetch_all(executor)
     .await?;
@@ -22,22 +21,20 @@ where
 }
 
 #[allow(dead_code)]
-pub async fn get_registered_scraper_by_id<'e, E>(
-    executor: E,
-    scraper_id: i32,
-) -> Result<RegisteredScraper, sqlx::Error>
+pub async fn get_worker_by_id<'e, E>(executor: E, worker_id: i32) -> Result<Worker, sqlx::Error>
 where
     E: sqlx::Executor<'e, Database = sqlx::Postgres>,
 {
     let result = sqlx::query_as!(
-        RegisteredScraper,
+        Worker,
         r"SELECT
             id,
+            external_id,
             endpoint,
-            timeout
-        FROM registered_scraper
+            interval
+        FROM worker
         WHERE id = $1",
-        scraper_id
+        worker_id
     )
     .fetch_one(executor)
     .await?;
@@ -45,7 +42,7 @@ where
     Ok(result)
 }
 
-pub async fn is_scraper_registered<'e, E>(
+pub async fn is_worker_registered<'e, E>(
     executor: E,
     external_id: &str,
 ) -> Result<bool, sqlx::Error>
@@ -53,7 +50,7 @@ where
     E: sqlx::Executor<'e, Database = sqlx::Postgres>,
 {
     sqlx::query!(
-        "SELECT EXISTS(SELECT 1 FROM registered_scraper WHERE external_id = $1)",
+        "SELECT EXISTS(SELECT 1 FROM worker WHERE external_id = $1)",
         external_id
     )
     .fetch_one(executor)
@@ -61,19 +58,19 @@ where
     .map(|record| record.exists.unwrap_or(false))
 }
 
-pub async fn register_scraper<'e, E>(
+pub async fn register_worker<'e, E>(
     executor: E,
-    scraper: &RegisterScraper,
+    register_worker: &RegisterWorker,
 ) -> Result<(), sqlx::Error>
 where
     E: sqlx::Executor<'e, Database = sqlx::Postgres>,
 {
     sqlx::query!(
-        r"INSERT INTO registered_scraper (external_id, endpoint, timeout)
+        r"INSERT INTO worker (external_id, endpoint, interval)
             VALUES ($1, $2, $3)",
-        scraper.id,
-        scraper.endpoint,
-        scraper.timeout,
+        register_worker.id,
+        register_worker.endpoint,
+        register_worker.interval,
     )
     .execute(executor)
     .await?;
