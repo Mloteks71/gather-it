@@ -1,11 +1,19 @@
 #![warn(clippy::all, clippy::pedantic)]
 #![allow(clippy::struct_field_names)]
 
+use std::sync::OnceLock;
+
 use axum::Router;
 use color_eyre::eyre::Result;
 use tracing::info;
 
 use crate::models::scheduler_request::RegisterScraper;
+
+static HTTP_CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
+
+fn http_client() -> &'static reqwest::Client {
+    HTTP_CLIENT.get_or_init(reqwest::Client::new)
+}
 
 mod models;
 mod rabbitmq;
@@ -34,9 +42,9 @@ async fn main() -> Result<()> {
 
     info!("Pracuj.pl scraper started on {}:{}", HOST, PORT);
 
-    handle_initial_registration().await;
+    tokio::spawn(handle_initial_registration());
 
-    let _ = axum::serve(listener, app).await;
+    let () = axum::serve(listener, app).await?;
 
     Ok(())
 }
@@ -71,13 +79,9 @@ async fn register_scraper() -> (axum::http::StatusCode, String) {
     let scheduler_url =
         std::env::var("SCHEDULER_URL").expect("SCHEDULER_URL environment variable is not set");
 
-    let response = reqwest::Client::new()
-        .post(scheduler_url)
-        .header("Content-Type", "application/json")
-        .body(
-            serde_json::to_string(&RegisterScraper::default())
-                .expect("Failed to serialize RegisterScraper"),
-        )
+    let response = http_client()
+        .post(&scheduler_url)
+        .json(&RegisterScraper::new())
         .send()
         .await;
 
@@ -91,7 +95,11 @@ async fn register_scraper() -> (axum::http::StatusCode, String) {
             } else {
                 (
                     axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Failed to register scraper: HTTP {}", resp.status()),
+                    format!(
+                        "Failed to register scraper on URL: {} : HTTP {}",
+                        &scheduler_url,
+                        resp.status()
+                    ),
                 )
             }
         }

@@ -7,5 +7,5 @@ pub struct RegisterScraper {
     // url to call to trigger scraping
     pub endpoint: String,
     // seconds
-    pub timeout: u64,
+    pub timeout: i32,
 }

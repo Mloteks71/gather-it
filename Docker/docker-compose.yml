@@ -110,8 +110,8 @@ services:
       dockerfile: Dockerfile-database
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: pL5dT78Uyu
+      POSTGRES_USER: scheduler
+      POSTGRES_PASSWORD: jad21D10cazX
       POSTGRES_DB: postgres
     ports:
       - "5401:5432"
