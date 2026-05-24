@@ -17,7 +17,7 @@ use crate::repositories::{
     skill_snapshot::SkillSnapshotRepository, skill_variant::SkillVariantRepository,
 };
 
-const IDLE_TIMEOUT: Duration = Duration::from_secs(60);
+const IDLE_TIMEOUT: Duration = Duration::from_mins(1);
 
 pub async fn bind(pool: &Pool<Postgres>, mut consumer: lapin::Consumer) -> color_eyre::Result<()> {
     let mut buffer: Vec<CommonJobAdDto> = Vec::new();
