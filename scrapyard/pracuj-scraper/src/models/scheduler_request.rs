@@ -1,14 +1,14 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct RegisterScraper {
     pub id: String,
     pub endpoint: String,
-    pub timeout: u64,
+    pub timeout: i32,
 }
 
-impl Default for RegisterScraper {
-    fn default() -> Self {
+impl RegisterScraper {
+    pub fn new() -> Self {
         Self {
             id: "pracuj-pl-scraper-rust".to_string(),
             endpoint: std::env::var("SCRAPER_ENDPOINT")

@@ -27,13 +27,13 @@ async fn do_scraping() -> Result<String> {
 
     let start_timer = std::time::Instant::now();
 
-    let first_page_content = fetch_page(&client, BASE_URL.to_string()).await?;
+    let first_page_content = fetch_page(&client, BASE_URL).await?;
     let number_of_pages;
     let mut offers;
     {
         let first_page_html = Html::parse_document(&first_page_content);
         number_of_pages = get_number_of_pages(&first_page_html)?;
-        offers = get_data_from_sript_tag(&first_page_html)?;
+        offers = get_data_from_script_tag(&first_page_html)?;
         // first_page_html dropped here
     }
 
@@ -47,7 +47,7 @@ async fn do_scraping() -> Result<String> {
         let sem = semaphore.clone();
         set.spawn(async move {
             let _permit = sem.acquire().await.unwrap();
-            fetch_page(&client, url).await
+            fetch_page(&client, &url).await
         });
     }
 
@@ -63,7 +63,7 @@ async fn do_scraping() -> Result<String> {
     // TODO: optimize parsing
     for page in &pages {
         let parsed = Html::parse_document(page);
-        match get_data_from_sript_tag(&parsed) {
+        match get_data_from_script_tag(&parsed) {
             Ok(mut jobs) => offers.append(&mut jobs),
             Err(e) => warn!("error while deserializing data {e}"),
         }
@@ -90,7 +90,7 @@ fn build_url(page_number: usize) -> String {
     format!("{BASE_URL}?pn={page_number}")
 }
 
-async fn fetch_page(client: &Client, url: String) -> Result<String> {
+async fn fetch_page(client: &Client, url: &str) -> Result<String> {
     info!(url, "fetching page");
 
     let Ok(body) = client.get(url).send().await else {
@@ -112,7 +112,7 @@ fn get_number_of_pages(html: &Html) -> Result<usize> {
     Ok(html
         .select(&selector)
         .next()
-        .unwrap()
+        .ok_or_else(|| eyre::eyre!("element not found"))?
         .text()
         .collect::<String>()
         .parse::<usize>()?)
@@ -120,7 +120,7 @@ fn get_number_of_pages(html: &Html) -> Result<usize> {
 
 // instead of scraping each individual offer separetely
 // we can find a <script> tag that contains all the data listed on the page and parse it
-fn get_data_from_sript_tag(html: &Html) -> Result<Vec<JobOffer>> {
+fn get_data_from_script_tag(html: &Html) -> Result<Vec<JobOffer>> {
     let selector = Selector::parse(SCRIPT_DATA_SELECTOR).unwrap();
 
     let data = html
