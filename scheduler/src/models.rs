@@ -1,4 +1,4 @@
-pub mod register_scraper;
-pub mod registered_scraper;
-pub mod scraper_job;
-pub mod scraper_job_log;
+pub mod register_worker;
+pub mod work;
+pub mod work_log;
+pub mod worker;

@@ -1,5 +1,5 @@
 #[allow(dead_code)]
-pub enum JobStatus {
+pub enum WorkStatus {
     Success,
     Failed,
 }
