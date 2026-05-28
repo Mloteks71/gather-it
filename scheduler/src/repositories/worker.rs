@@ -1,6 +1,7 @@
+#![allow(dead_code)]
+
 use crate::models::{register_worker::RegisterWorker, worker::Worker};
 
-#[allow(dead_code)]
 pub async fn get_all_workers<'e, E>(executor: E) -> Result<Vec<Worker>, sqlx::Error>
 where
     E: sqlx::Executor<'e, Database = sqlx::Postgres>,
@@ -20,7 +21,6 @@ where
     Ok(result)
 }
 
-#[allow(dead_code)]
 pub async fn get_worker_by_id<'e, E>(executor: E, worker_id: i32) -> Result<Worker, sqlx::Error>
 where
     E: sqlx::Executor<'e, Database = sqlx::Postgres>,
@@ -61,19 +61,20 @@ where
 pub async fn register_worker<'e, E>(
     executor: E,
     register_worker: &RegisterWorker,
-) -> Result<(), sqlx::Error>
+) -> Result<i32, sqlx::Error>
 where
     E: sqlx::Executor<'e, Database = sqlx::Postgres>,
 {
-    sqlx::query!(
+    let record = sqlx::query!(
         r"INSERT INTO worker (external_id, endpoint, interval)
-            VALUES ($1, $2, $3)",
+            VALUES ($1, $2, $3)
+            RETURNING id",
         register_worker.id,
         register_worker.endpoint,
         register_worker.interval,
     )
-    .execute(executor)
+    .fetch_one(executor)
     .await?;
 
-    Ok(())
+    Ok(record.id)
 }
