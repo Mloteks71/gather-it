@@ -8,7 +8,10 @@ use axum::{
 use sqlx::Postgres;
 use tracing::{info, warn};
 
-use crate::repositories::worker;
+use crate::{
+    models::work::Work,
+    repositories::{work::insert_work, worker},
+};
 
 mod config;
 mod enums;
@@ -38,6 +41,7 @@ async fn main() {
         panic!("cannot connect to database");
     };
 
+    let scheduler_pool = pool.clone();
     let shared_state = AppState { pool };
 
     info!("Connected to PostgreSQL database");
@@ -56,8 +60,9 @@ async fn main() {
         let _ = axum::serve(listener, app).await;
     });
 
-    let bg_job = tokio::spawn(async {
+    let bg_job = tokio::spawn(async move {
         tracing::info!("Background service started");
+        scheduler::start_scheduler(scheduler_pool).await;
     });
 
     let _ = tokio::try_join!(server, bg_job);
@@ -67,6 +72,7 @@ async fn healthcheck() -> &'static str {
     "OK"
 }
 
+#[allow(clippy::cast_sign_loss)]
 async fn register(
     axum::extract::State(state): axum::extract::State<AppState>,
     Json(payload): Json<crate::models::register_worker::RegisterWorker>,
@@ -88,8 +94,19 @@ async fn register(
         Ok(false) => {}
     }
 
-    let Ok(()) = worker::register_worker(&mut *transaction, &payload).await else {
+    let Ok(worker_id) = worker::register_worker(&mut *transaction, &payload).await else {
         warn!("Failed to register with id: {}", payload.id);
+        return StatusCode::INTERNAL_SERVER_ERROR;
+    };
+
+    let scheduled_time =
+        sqlx::types::chrono::Utc::now() + std::time::Duration::from_secs(payload.interval as u64);
+    let Ok(_work_id) = insert_work(&mut *transaction, &Work::new(worker_id, scheduled_time)).await
+    else {
+        warn!(
+            "Failed to insert initial work for worker id: {}",
+            payload.id
+        );
         return StatusCode::INTERNAL_SERVER_ERROR;
     };
 
