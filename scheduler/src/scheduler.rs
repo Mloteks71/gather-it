@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use sqlx::Postgres;
 use tracing::{error, info};
 
@@ -10,16 +12,19 @@ use crate::{
     },
 };
 
-const SCHEDULE_INTERVAL: std::time::Duration = tokio::time::Duration::from_secs(30);
+const SCHEDULE_INTERVAL: std::time::Duration = tokio::time::Duration::from_mins(30);
+const MAX_CONCURRENT_WORK: usize = 20;
 
 #[allow(clippy::cast_sign_loss)]
 pub async fn start_scheduler(pool: sqlx::Pool<Postgres>) {
     let client = reqwest::Client::builder()
         .connect_timeout(tokio::time::Duration::from_mins(1))
+        .timeout(tokio::time::Duration::from_mins(2))
         .build()
         .unwrap();
 
     let mut interval = tokio::time::interval(SCHEDULE_INTERVAL);
+    let semaphore = Arc::new(tokio::sync::Semaphore::new(MAX_CONCURRENT_WORK));
 
     loop {
         interval.tick().await;
@@ -32,16 +37,22 @@ pub async fn start_scheduler(pool: sqlx::Pool<Postgres>) {
             }
         };
 
+        if pending.is_empty() {
+            continue;
+        }
+
         info!("Dispatching {} pending work item(s)", pending.len());
 
         for pw in pending {
+            let permit = semaphore.clone().acquire_owned().await.unwrap();
             let client = client.clone();
             let executor = pool.clone();
 
             tokio::spawn(async move {
+                let _permit = permit;
+                let new_time =
+                    pw.scheduled_time + std::time::Duration::from_secs(pw.interval as u64);
                 let log = do_work(&client, &pw).await;
-                let new_time = sqlx::types::chrono::Utc::now()
-                    + std::time::Duration::from_secs(pw.interval as u64);
                 if update_work_schedule(&executor, pw.id, new_time)
                     .await
                     .is_err()
@@ -98,7 +109,7 @@ async fn do_work(client: &reqwest::Client, pw: &PendingWork) -> WorkLog {
             WorkLog::new(
                 pw.id,
                 WorkStatus::Failed,
-                Some("Request error: {e}".to_string()),
+                Some(format!("Request error: {e}")),
                 sqlx::types::chrono::Utc::now(),
                 elapsed,
             )
