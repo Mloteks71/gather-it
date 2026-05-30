@@ -27,8 +27,8 @@ public class ComulatorController : BaseController
         _mappingServiceMessageSender = mappingServiceMessageSender;
     }
 
-    [HttpPost("Download")]
-    public async Task<ActionResult> DownloadJobData(bool getDescription = true)
+    [HttpGet("Download")]
+    public async Task<ActionResult> DownloadJobData()
     {
         var stopWatch = new Stopwatch();
         stopWatch.Start();

@@ -8,6 +8,7 @@ using Infrastructure.Services.MessageSenders;
 using RabbitMQ.Client.Core.DependencyInjection;
 using RabbitMQ.Client.Core.DependencyInjection.Configuration;
 using Serilog;
+using WebApi.HostedServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,6 +50,9 @@ builder.Services.AddHttpClient<ITheProtocolItHttpClient, TheProtocolItHttpClient
         client.DefaultRequestHeaders.TryAddWithoutValidation(header.Key, header.Value);
     }
 });
+
+builder.Services.AddHttpClient();
+builder.Services.AddHostedService<SchedulerRegistrationService>();
 
 builder.Services.AddRabbitMqServices(configService.RabbitMqServiceOptions);
 
