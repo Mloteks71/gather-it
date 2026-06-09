@@ -37,7 +37,7 @@ services:
     volumes:
       - database-postgres-jobads:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -75,8 +75,7 @@ services:
     environment:
       - DATABASE_URL=postgres://postgres:jad21D10cazX@postgres-scheduler:5432/postgres
     healthcheck:
-      test:
-        ["CMD-SHELL", "wget -qO- http://127.0.0.1:8101/healthcheck || exit 1"]
+      test: [ "CMD-SHELL", "wget -qO- http://127.0.0.1:8101/healthcheck || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -96,11 +95,10 @@ services:
       - RABBITMQ_URL=amqp://rabbituser:rabbitpass@rabbitmq:5672/
       - RABBITMQ_EXCHANGE=mapping_exchange
       - RABBITMQ_ROUTING_KEY=mapping
-      - SCHEDULER_URL=http://scheduler:8101/register-scraper
+      - SCHEDULER_URL=http://scheduler:8101/register
       - SCRAPER_ENDPOINT=http://pracuj-scraper:8800/scrap
     healthcheck:
-      test:
-        ["CMD-SHELL", "wget -qO- http://127.0.0.1:8800/healthcheck || exit 1"]
+      test: [ "CMD-SHELL", "wget -qO- http://127.0.0.1:8800/healthcheck || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -136,7 +134,7 @@ services:
       - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json
       - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
     healthcheck:
-      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      test: [ "CMD-SHELL", "rabbitmq-diagnostics -q ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
