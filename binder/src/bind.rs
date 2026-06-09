@@ -26,7 +26,13 @@ pub async fn bind(pool: &Pool<Postgres>, mut consumer: lapin::Consumer) -> color
         tokio::select! {
             delivery = consumer.next() => {
                 let Some(delivery) = delivery else {
-                    info!("Consumer stream ended");
+                    info!("Consumer stream ended, flushing {} buffered job ads", buffer.len());
+                    if !buffer.is_empty() {
+                        let data = std::mem::take(&mut buffer);
+                        if let Err(e) = upsert_data(data, pool).await {
+                            warn!("Failed to flush buffer on disconnect: {e}");
+                        }
+                    }
                     break;
                 };
 
@@ -46,7 +52,6 @@ pub async fn bind(pool: &Pool<Postgres>, mut consumer: lapin::Consumer) -> color
 
                 info!("Received {} job ads", job_ads.len());
                 buffer.extend(job_ads);
-
                 delivery
                     .ack(lapin::options::BasicAckOptions::default())
                     .await?;
@@ -184,15 +189,19 @@ async fn upsert_data(data: Vec<CommonJobAdDto>, pool: &Pool<Postgres>) -> color_
                 if let Some(&skill_id) = skill_variant_to_id.get(&skill_name_lower) {
                     JobAdSkillRepository::insert(&mut *tx, job_ad_id, skill_id).await?;
                 } else if let Some(&snapshot) = skill_snapshot_by_name.get(&skill_name_lower) {
-                    SkillSnapshotRepository::append_job_ad_id(
+                    SkillSnapshotRepository::append_skill_snapshot_job_ad_id(
                         &mut *tx,
                         snapshot.skill_snapshot_id,
                         job_ad_id,
                     )
                     .await?;
                 } else if let Some(&snapshot_id) = new_skill_snapshot_ids.get(&skill_name_lower) {
-                    SkillSnapshotRepository::append_job_ad_id(&mut *tx, snapshot_id, job_ad_id)
-                        .await?;
+                    SkillSnapshotRepository::append_skill_snapshot_job_ad_id(
+                        &mut *tx,
+                        snapshot_id,
+                        job_ad_id,
+                    )
+                    .await?;
                 } else {
                     let snapshot = NewSkillSnapshot {
                         name: skill_name.clone(),
