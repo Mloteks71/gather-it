@@ -30,7 +30,7 @@ async fn main() -> color_eyre::Result<()> {
         config().rabbitmq_queue_name
     );
 
-    // bind::bind(&pool, consumer).await?;
+    bind::bind(&pool, consumer).await?;
 
     channel.close(200, "Goodbye".into()).await?;
     conn.close(200, "Goodbye".into()).await?;
