@@ -9,7 +9,7 @@ mod repositories;
 
 use lapin::types::FieldTable;
 use sqlx::{Postgres, postgres::PgPoolOptions};
-use tracing::info;
+use tracing::{info, warn};
 use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::config::config;
@@ -24,13 +24,19 @@ async fn main() -> color_eyre::Result<()> {
     let pool = setup_postgres().await?;
     info!("Connected to PostgreSQL database");
 
-    let consumer = setup_rmq().await?;
+    let (conn, channel, consumer) = setup_rmq().await?;
     info!(
-        "Connected to RabbitMQ and consuming from queue: {}",
+        "Connected to RabbitMQ and consuming from queue: '{}'",
         config().rabbitmq_queue_name
     );
 
     bind::bind(&pool, consumer).await?;
+
+    channel.close(200, "Goodbye".into()).await?;
+    conn.close(200, "Goodbye".into()).await?;
+    pool.close().await;
+
+    info!("Shutdown complete");
 
     Ok(())
 }
@@ -64,7 +70,7 @@ async fn setup_postgres() -> color_eyre::Result<sqlx::Pool<Postgres>> {
         .await?)
 }
 
-async fn setup_rmq() -> color_eyre::Result<lapin::Consumer> {
+async fn setup_rmq() -> color_eyre::Result<(lapin::Connection, lapin::Channel, lapin::Consumer)> {
     let conn_options = lapin::ConnectionProperties::default();
 
     let conn = lapin::Connection::connect(&config().rabbitmq_url, conn_options).await?;
@@ -73,12 +79,14 @@ async fn setup_rmq() -> color_eyre::Result<lapin::Consumer> {
 
     let consumer_options = lapin::options::BasicConsumeOptions::default();
 
-    Ok(channel
+    let consumer = channel
         .basic_consume(
             config().rabbitmq_queue_name.clone().into(),
             config().rabbitmq_consumer_tag.clone().into(),
             consumer_options,
             FieldTable::default(),
         )
-        .await?)
+        .await?;
+
+    Ok((conn, channel, consumer))
 }

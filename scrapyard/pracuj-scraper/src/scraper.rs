@@ -1,6 +1,12 @@
 use std::sync::Arc;
 
-use crate::{models::pracujpl_response::JobOffer, rabbitmq};
+use crate::{
+    models::{
+        pracujpl_response::JobOffer,
+        rmq_message::{CommonJobAdDto, map_offer},
+    },
+    rabbitmq,
+};
 use color_eyre::eyre::{self, Result, bail};
 use scraper::{Html, Selector};
 use serde_json::Value;
@@ -34,7 +40,6 @@ async fn do_scraping() -> Result<String> {
         let first_page_html = Html::parse_document(&first_page_content);
         number_of_pages = get_number_of_pages(&first_page_html)?;
         offers = get_data_from_script_tag(&first_page_html)?;
-        // first_page_html dropped here
     }
 
     info!(number_of_pages, "discovered total pages");
@@ -71,6 +76,8 @@ async fn do_scraping() -> Result<String> {
 
     let elapsed = start_timer.elapsed();
     info!("scraped: {} in {}ms", offers.len(), elapsed.as_millis());
+
+    let offers: Vec<CommonJobAdDto> = offers.iter().map(map_offer).collect();
 
     rabbitmq::publish_offers(&channel, &offers).await?;
     Ok(format!(
@@ -136,10 +143,10 @@ fn get_data_from_script_tag(html: &Html) -> Result<Vec<JobOffer>> {
 
     let job_offers = serde_json::from_value::<Vec<JobOffer>>(v.clone())?;
 
-    // info!(
-    //     "successfully extracted data from script tag, found {} offers",
-    //     job_offers.len()
-    // );
+    tracing::debug!(
+        "successfully extracted data from script tag, found {} offers",
+        job_offers.len()
+    );
 
     Ok(job_offers)
 }
