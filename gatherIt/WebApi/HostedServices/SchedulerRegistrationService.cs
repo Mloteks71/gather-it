@@ -15,7 +15,8 @@ public class SchedulerRegistrationService : BackgroundService
 
     public SchedulerRegistrationService(
         IConfiguration configuration,
-        ILogger<SchedulerRegistrationService> logger)
+        ILogger<SchedulerRegistrationService> logger
+    )
     {
         _configuration = configuration;
         _logger = logger;
@@ -33,7 +34,8 @@ public class SchedulerRegistrationService : BackgroundService
 
         for (var attempt = 1; attempt <= RetryLimit; attempt++)
         {
-            if (ct.IsCancellationRequested) return;
+            if (ct.IsCancellationRequested)
+                return;
 
             try
             {
@@ -42,19 +44,28 @@ public class SchedulerRegistrationService : BackgroundService
 
                 if (response.IsSuccessStatusCode)
                 {
-                    _logger.LogInformation("Successfully registered with scheduler at {Url}", schedulerUrl);
+                    _logger.LogInformation(
+                        "Successfully registered with scheduler at {Url}",
+                        schedulerUrl
+                    );
                     return;
                 }
 
                 _logger.LogWarning(
                     "Attempt {Attempt}/{RetryLimit} - Scheduler returned {StatusCode}",
-                    attempt, RetryLimit, response.StatusCode);
+                    attempt,
+                    RetryLimit,
+                    response.StatusCode
+                );
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(
                     "Attempt {Attempt}/{RetryLimit} - Failed to reach scheduler: {Message}",
-                    attempt, RetryLimit, ex.Message);
+                    attempt,
+                    RetryLimit,
+                    ex.Message
+                );
             }
 
             if (attempt < RetryLimit)
@@ -63,7 +74,8 @@ public class SchedulerRegistrationService : BackgroundService
 
         _logger.LogError(
             "Exceeded {RetryLimit} registration attempts. Service will continue without scheduler registration.",
-            RetryLimit);
+            RetryLimit
+        );
     }
 }
 
