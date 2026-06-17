@@ -29,6 +29,7 @@ services:
         condition: service_healthy
     environment:
       - RABBITMQ_URL=amqp://rabbituser:rabbitpass@rabbitmq:5672/
+      - KAFKA_URL=kafka:9092
 
   postgres-jobads:
     build:
@@ -76,7 +77,7 @@ services:
       - "8101:8101"
     depends_on:
       postgres-scheduler:
-        condition: service_started
+        condition: service_healthy
       rabbitmq:
         condition: service_healthy
     environment:
@@ -118,9 +119,9 @@ services:
       dockerfile: Dockerfile
     depends_on:
       rabbitmq:
-        condition: service_started
+        condition: service_healthy
       postgres-jobads:
-        condition: service_started
+        condition: service_healthy
     environment:
       - RABBITMQ_URL=amqp://rabbituser:rabbitpass@rabbitmq:5672/%2f
       - RABBITMQ_QUEUE_NAME=MappingQueue
