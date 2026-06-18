@@ -15,7 +15,7 @@ services:
         # for now webapi registers itself with scheduler so JustJoinIt and TheProtocol endpoints can be used to gather data
         # this will change when appropriate scrapers will be implemented
       scheduler:
-        condition: service_started
+        condition: service_healthy
     environment:
       - Scheduler__Url=http://scheduler:8101/register
       - Scheduler__WorkerEndpoint=http://webapi:8001/api/Comulator/Download
@@ -99,7 +99,7 @@ services:
       rabbitmq:
         condition: service_healthy
       scheduler:
-        condition: service_started
+        condition: service_healthy
     environment:
       - RABBITMQ_URL=amqp://rabbituser:rabbitpass@rabbitmq:5672/
       - RABBITMQ_EXCHANGE=mapping_exchange
