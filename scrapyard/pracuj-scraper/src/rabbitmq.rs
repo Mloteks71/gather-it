@@ -4,8 +4,7 @@ use lapin::{
 };
 use tracing::info;
 
-use crate::models::pracujpl_response::JobOffer;
-use crate::models::rmq_message::{CommonJobAdDto, map_offer};
+use crate::models::rmq_message::CommonJobAdDto;
 
 pub async fn setup_rmq() -> Result<Channel> {
     let rabbitmq_url = std::env::var("RABBITMQ_URL").expect("RABBITMQ_URL must be set");
@@ -33,13 +32,12 @@ pub async fn setup_rmq() -> Result<Channel> {
     Ok(channel)
 }
 
-pub async fn publish_offers(channel: &Channel, offers: &[JobOffer]) -> Result<()> {
+pub async fn publish_offers(channel: &Channel, offers: &[CommonJobAdDto]) -> Result<()> {
     let exchange = std::env::var("RABBITMQ_EXCHANGE").expect("RABBITMQ_EXCHANGE must be set");
     let routing_key =
         std::env::var("RABBITMQ_ROUTING_KEY").expect("RABBITMQ_ROUTING_KEY must be set");
 
-    let messages: Vec<CommonJobAdDto> = offers.iter().map(map_offer).collect();
-    let payload = serde_json::to_vec(&messages)?;
+    let payload = serde_json::to_vec(&offers)?;
 
     channel
         .basic_publish(
@@ -52,7 +50,7 @@ pub async fn publish_offers(channel: &Channel, offers: &[JobOffer]) -> Result<()
         .await?
         .await?;
 
-    info!("Published {} job ads to RabbitMQ", messages.len());
+    info!("Published {} job ads to RabbitMQ", offers.len());
 
     Ok(())
 }

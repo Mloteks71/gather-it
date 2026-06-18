@@ -31,7 +31,7 @@ impl SkillSnapshotRepository {
         Ok(id)
     }
 
-    pub async fn append_job_ad_id<'e, E>(
+    pub async fn append_skill_snapshot_job_ad_id<'e, E>(
         executor: E,
         skill_snapshot_id: i32,
         job_ad_id: i32,
@@ -52,4 +52,3 @@ impl SkillSnapshotRepository {
         Ok(())
     }
 }
-

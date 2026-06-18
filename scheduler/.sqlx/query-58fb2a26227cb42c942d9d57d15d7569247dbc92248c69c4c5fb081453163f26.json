@@ -1,0 +1,64 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT\n            id,\n            external_id,\n            endpoint,\n            interval\n        FROM worker\n        WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "worker",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "external_id",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "worker",
+            "name": "external_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "endpoint",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "worker",
+            "name": "endpoint"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "interval",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "worker",
+            "name": "interval"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "58fb2a26227cb42c942d9d57d15d7569247dbc92248c69c4c5fb081453163f26"
+}

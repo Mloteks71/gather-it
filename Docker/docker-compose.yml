@@ -2,7 +2,6 @@ name: gather-it
 
 services:
   webapi:
-    image: ${DOCKER_REGISTRY-}webapi
     build:
       context: ../gatherIt
       dockerfile: WebApi/Dockerfile
@@ -13,6 +12,13 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+        # for now webapi registers itself with scheduler so JustJoinIt and TheProtocol endpoints can be used to gather data
+        # this will change when appropriate scrapers will be implemented
+      scheduler:
+        condition: service_healthy
+    environment:
+      - Scheduler__Url=http://scheduler:8101/register
+      - Scheduler__WorkerEndpoint=http://webapi:8001/api/Comulator/Download
 
   gatherit:
     build:
@@ -20,8 +26,6 @@ services:
       dockerfile: Dockerfile
     depends_on:
       rabbitmq:
-        condition: service_healthy
-      kafka:
         condition: service_healthy
     environment:
       - RABBITMQ_URL=amqp://rabbituser:rabbitpass@rabbitmq:5672/
@@ -41,7 +45,26 @@ services:
     volumes:
       - database-postgres-jobads:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  postgres-scheduler:
+    build:
+      context: ../scheduler/database
+      dockerfile: Dockerfile-database
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: jad21D10cazX
+      POSTGRES_DB: postgres
+    ports:
+      - "5401:5432"
+    volumes:
+      - database-postgres-scheduler:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -55,10 +78,13 @@ services:
     depends_on:
       postgres-scheduler:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     environment:
-      - DATABASE_URL=postgres://postgres:pL5dT78Uyu@postgres-scheduler:5432/postgres
+      - DATABASE_URL=postgres://postgres:jad21D10cazX@postgres-scheduler:5432/postgres
     healthcheck:
-      test: [ "CMD-SHELL", "wget -qO- http://127.0.0.1:8101/healthcheck || exit 1" ]
+      test:
+        ["CMD-SHELL", "wget -qO- http://127.0.0.1:8101/healthcheck || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -81,7 +107,8 @@ services:
       - SCHEDULER_URL=http://scheduler:8101/register
       - SCRAPER_ENDPOINT=http://pracuj-scraper:8800/scrap
     healthcheck:
-      test: [ "CMD-SHELL", "wget -qO- http://127.0.0.1:8800/healthcheck || exit 1" ]
+      test:
+        ["CMD-SHELL", "wget -qO- http://127.0.0.1:8800/healthcheck || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -102,25 +129,6 @@ services:
       - DATABASE_URL=postgres://postgres:pL5dT78Uyu@postgres-jobads:5432/postgres
       - RUST_LOG=info
 
-  postgres-scheduler:
-    build:
-      context: ../scheduler/database
-      dockerfile: Dockerfile-database
-    restart: always
-    environment:
-      POSTGRES_USER: scheduler
-      POSTGRES_PASSWORD: jad21D10cazX
-      POSTGRES_DB: postgres
-    ports:
-      - "5401:5432"
-    volumes:
-      - database-postgres-scheduler:/var/lib/postgresql/data
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
   rabbitmq:
     image: rabbitmq:3.12-management
     restart: always
@@ -136,52 +144,12 @@ services:
       - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json
       - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
     healthcheck:
-      test: [ "CMD-SHELL", "rabbitmq-diagnostics -q ping" ]
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
       interval: 10s
       timeout: 5s
       retries: 5
-
-  kafka:
-    image: apache/kafka:3.7.1
-    restart: always
-    ports:
-      - "9092:9092"
-    environment:
-      - KAFKA_NODE_ID=1
-      - KAFKA_PROCESS_ROLES=broker,controller
-      - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
-      - KAFKA_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
-      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
-      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
-      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
-      - KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT
-      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=false
-      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
-      - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
-      - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
-      - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
-      - KAFKA_LOG_DIRS=/var/lib/kafka/data
-      - CLUSTER_ID=MkU3OEVBNTcwNTJENDM2Qk
-    volumes:
-      - kafka-data:/var/lib/kafka/data
-    healthcheck:
-      test: [ "CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list > /dev/null 2>&1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-
-  kafka-init:
-    image: apache/kafka:3.7.1
-    depends_on:
-      kafka:
-        condition: service_healthy
-    entrypoint: [ "/bin/bash", "-c" ]
-    command: >
-      "/opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic jobs-topic --partitions 1 --replication-factor 1"
-    restart: "no"
 
 volumes:
   database-postgres-jobads:
   database-postgres-scheduler:
   rabbitmq-data:
-  kafka-data:
