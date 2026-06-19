@@ -17,7 +17,8 @@ public class MappingServiceMessageSender : IMappingServiceMessageSender
     public MappingServiceMessageSender(
         IConfigurationService config,
         IProducingService producingService,
-        ILogger<IMappingServiceMessageSender> logger)
+        ILogger<IMappingServiceMessageSender> logger
+    )
     {
         _producingService = producingService;
         _exchangeName = config.RabbitMqMappingExchangeName;
@@ -33,11 +34,14 @@ public class MappingServiceMessageSender : IMappingServiceMessageSender
             return;
         }
 
-        _logger.LogInformation(
-            "Sending {Count} mapped job ads to RabbitMQ",
-            jobAds.Count);
+        _logger.LogInformation("Sending {Count} mapped job ads to RabbitMQ", jobAds.Count);
 
-        await _producingService.SendAsync(jobAds, _exchangeName, _routingKey);
+        const int chunkSize = 500;
+        for (int i = 0; i < jobAds.Count; i += chunkSize)
+        {
+            var chunk = jobAds.GetRange(i, Math.Min(chunkSize, jobAds.Count - i));
+            await _producingService.SendAsync(chunk, _exchangeName, _routingKey);
+        }
 
         _logger.LogInformation("Successfully sent {Count} job ads to mapping queue", jobAds.Count);
     }
