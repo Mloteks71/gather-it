@@ -14,6 +14,6 @@ public class CommonJobAdDto
     public List<string>? ExperienceLevels { get; init; }
     public List<string>? Locations { get; init; }
     public List<SalaryRangeDto>? Salaries { get; init; }
-    public DateTime? PublishedAt { get; init; }
+    public DateTimeOffset? PublishedAt { get; init; }
     public string? LogoUrl { get; init; }
 }
