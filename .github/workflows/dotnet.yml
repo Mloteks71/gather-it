@@ -5,50 +5,48 @@ name: .NET
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ["master"]
   pull_request:
-    branches: [ "master" ]
+    branches: ["master"]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 8.0.x
-    - name: Restore dependencies
-      run: dotnet restore gatherIt.sln
-    - name: Build
-      run: dotnet build gatherIt.sln --no-restore
-      
+      - uses: actions/checkout@v6
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.x
+      - name: Restore dependencies
+        run: dotnet restore gatherIt.sln
+      - name: Build
+        run: dotnet build gatherIt.sln --no-restore
+
   format:
-  
     runs-on: ubuntu-latest
     needs: build
-  
+
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 8.0.x
-    - name: Check code formatting with dotnet format
-      run: dotnet format gatherIt.sln --no-restore --verify-no-changes --severity warn --report ./format.json 
+      - uses: actions/checkout@v6
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.x
+      - name: Check code formatting with dotnet format
+        run: dotnet format gatherIt.sln --no-restore --verify-no-changes --severity warn --report ./format.json
 
   comulator-test:
     runs-on: ubuntu-latest
-    needs: 
-      - build 
+    needs:
+      - build
       - format
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 8.0.x
       - name: Running tests
