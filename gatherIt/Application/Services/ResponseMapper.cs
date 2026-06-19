@@ -50,7 +50,7 @@ public class ResponseMapper : IResponseMapper
                 Currency = sr.Currency,
                 ContractType = sr.Type
             }).ToList(),
-            PublishedAt = jobAd.PublishedAt,
+            PublishedAt = DateTime.SpecifyKind(jobAd.PublishedAt, DateTimeKind.Utc),
             LogoUrl = jobAd.CompanyLogoThumbUrl
         });
 
@@ -101,7 +101,7 @@ public class ResponseMapper : IResponseMapper
                 .ToList() is { Count: > 0 } salaries
                 ? salaries
                 : null,
-            PublishedAt = offer.PublicationDateUtc,
+            PublishedAt = DateTime.SpecifyKind(offer.PublicationDateUtc, DateTimeKind.Utc),
             LogoUrl = offer.LogoUrl
         });
 
