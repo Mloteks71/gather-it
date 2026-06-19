@@ -19,6 +19,7 @@ services:
     environment:
       - Scheduler__Url=http://scheduler:8101/register
       - Scheduler__WorkerEndpoint=http://webapi:8001/api/Comulator/Download
+      - ASPNETCORE_URLS=http://+:8001
 
   gatherit:
     build:
@@ -28,7 +29,7 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
-      - RABBITMQ_URL=amqp://rabbituser:rabbitpass@rabbitmq:5672/
+      - RABBITMQ_URL=amqp://rabbituser:rabbitpass@rabbitmq:5672/%2f
       - KAFKA_URL=kafka:9092
 
   postgres-jobads:
@@ -101,11 +102,12 @@ services:
       scheduler:
         condition: service_healthy
     environment:
-      - RABBITMQ_URL=amqp://rabbituser:rabbitpass@rabbitmq:5672/
+      - RABBITMQ_URL=amqp://rabbituser:rabbitpass@rabbitmq:5672/%2f
       - RABBITMQ_EXCHANGE=mapping_exchange
       - RABBITMQ_ROUTING_KEY=mapping
       - SCHEDULER_URL=http://scheduler:8101/register
       - SCRAPER_ENDPOINT=http://pracuj-scraper:8800/scrap
+      - ASPNETCORE_URLS=http://+:8001
     healthcheck:
       test:
         ["CMD-SHELL", "wget -qO- http://127.0.0.1:8800/healthcheck || exit 1"]
