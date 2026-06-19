@@ -7,31 +7,24 @@ on:
     branches: ["master"]
 
 jobs:
-  build-binder:
+  check:
     runs-on: ubuntu-latest
-
+    strategy:
+      fail-fast: false
+      matrix:
+        crate:
+          - binder
+          - scrapyard/pracuj-scraper
     env:
       SQLX_OFFLINE: true
-
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: Build binder
-        run: cargo build
-        working-directory: binder
-      - name: Clippy binder
-        run: cargo clippy -- -D warnings
-        working-directory: binder
-
-  build-pracuj-scraper:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - name: Build pracuj-scraper
-        run: cargo build
-        working-directory: scrapyard/pracuj-scraper
-      - name: Clippy pracuj-scraper
-        run: cargo clippy -- -D warnings
-        working-directory: scrapyard/pracuj-scraper
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ${{ matrix.crate }}
+      - name: Clippy
+        run: cargo clippy --all-targets --locked -- -D warnings
+        working-directory: ${{ matrix.crate }}
