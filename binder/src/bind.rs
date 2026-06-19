@@ -18,8 +18,12 @@ use crate::repositories::{
 };
 
 const IDLE_TIMEOUT: Duration = Duration::from_mins(1);
+const FAILED_PAYLOAD_DIR: &str = "failed_payloads";
 
 pub async fn bind(pool: &Pool<Postgres>, mut consumer: lapin::Consumer) -> color_eyre::Result<()> {
+    std::fs::create_dir(FAILED_PAYLOAD_DIR)
+        .unwrap_or_else(|e| warn!("Failed to create failed payloads directory: {e}"));
+
     let mut buffer: Vec<CommonJobAdDto> = Vec::new();
 
     loop {
@@ -35,13 +39,13 @@ pub async fn bind(pool: &Pool<Postgres>, mut consumer: lapin::Consumer) -> color
                     }
                     break;
                 };
-
                 let delivery = delivery?;
                 let payload = std::str::from_utf8(&delivery.data)?;
 
                 let job_ads: Vec<CommonJobAdDto> = match serde_json::from_str(payload) {
                     Ok(ads) => ads,
                     Err(e) => {
+                        std::fs::write(format!("{}/{}.txt", FAILED_PAYLOAD_DIR, chrono::Utc::now().timestamp()), payload)?;
                         warn!("Failed to deserialize payload: {e}");
                         delivery
                             .ack(lapin::options::BasicAckOptions::default())
