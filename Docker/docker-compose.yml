@@ -21,6 +21,26 @@ services:
       - Scheduler__WorkerEndpoint=http://webapi:8001/api/Comulator/Download
       - ASPNETCORE_URLS=http://+:8001
 
+  jobReadApi:
+    image: gather-it-jobreadapi:latest
+    build:
+      context: ../JobReadApi
+      dockerfile: JobReadApi.WebApi/Dockerfile
+    ports:
+      - "8002:8080"
+    depends_on:
+      postgres-jobads:
+        condition: service_healthy
+    environment:
+      - DB_CONNECTION_STRING=Host=postgres-jobads;Port=5432;Database=postgres;Username=postgres;Password=pL5dT78Uyu
+      - ASPNETCORE_URLS=http://+:8080
+      - ASPNETCORE_ENVIRONMENT=Production
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   gatherit:
     build:
       context: ../Comulator
