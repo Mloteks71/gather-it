@@ -36,7 +36,7 @@ services:
       - ASPNETCORE_URLS=http://+:8080
       - ASPNETCORE_ENVIRONMENT=Production
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/api/health || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://127.0.0.1:8080/api/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5

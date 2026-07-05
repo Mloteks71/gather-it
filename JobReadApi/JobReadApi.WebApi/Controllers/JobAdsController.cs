@@ -1,6 +1,6 @@
-using Microsoft.AspNetCore.Mvc;
 using JobReadApi.Application.Enums;
 using JobReadApi.Application.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
 namespace JobReadApi.WebApi.Controllers;
 
