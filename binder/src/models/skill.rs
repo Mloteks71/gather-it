@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use sqlx::FromRow;
 
-#[derive(Debug, FromRow, Deserialize)]
+#[derive(Debug, Clone, FromRow, Deserialize)]
 pub struct Skill {
     pub skill_id: i32,
     pub name: String,

@@ -7,7 +7,7 @@ use crate::models::skill::Skill;
 
 use crate::models::enums::{ExperienceLevel, JobSite, OfferStatus, WorkplaceType};
 
-#[derive(Debug, FromRow, Deserialize)]
+#[derive(Debug, Clone, FromRow, Deserialize)]
 pub struct JobAd {
     pub job_ad_id: i32,
     pub external_id: String,
