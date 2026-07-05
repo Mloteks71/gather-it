@@ -1,15 +1,14 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::time::Duration;
 
 use sqlx::{Pool, Postgres};
 use tokio_stream::StreamExt;
 use tracing::{info, warn};
 
-use crate::models::company::{CompanySnapshot, NewCompanySnapshot};
-use crate::models::enums::OfferStatus;
-use crate::models::job_ad::NewJobAd;
+use crate::models::company::NewCompanySnapshot;
+use crate::models::job_ad::{JobAd, NewJobAd};
 use crate::models::messages::CommonJobAdDto;
-use crate::models::skill::{NewSkillSnapshot, SkillSnapshot};
+use crate::models::skill::NewSkillSnapshot;
 use crate::repositories::{
     company::CompanyRepository, company_snapshot::CompanySnapshotRepository,
     company_variant::CompanyVariantRepository, job_ad::JobAdRepository,
@@ -80,8 +79,13 @@ pub async fn bind(pool: &Pool<Postgres>, mut consumer: lapin::Consumer) -> color
 
 #[allow(clippy::too_many_lines)]
 async fn upsert_data(data: Vec<CommonJobAdDto>, pool: &Pool<Postgres>) -> color_eyre::Result<()> {
+    let start = std::time::Instant::now();
+    let data_len = data.len();
+    let mut tx = pool.begin().await?;
+    let external_ids: Vec<String> = data.iter().map(|d| d.id.clone()).collect();
+
     let (
-        all_job_ads,
+        existing_job_ads,
         all_skills,
         all_skill_variants,
         all_skill_snapshots,
@@ -89,7 +93,7 @@ async fn upsert_data(data: Vec<CommonJobAdDto>, pool: &Pool<Postgres>) -> color_
         all_company_variants,
         all_company_snapshots,
     ) = tokio::try_join!(
-        JobAdRepository::get_active(pool),
+        JobAdRepository::get_by_external_ids(pool, &external_ids),
         SkillRepository::get_all(pool),
         SkillVariantRepository::get_all(pool),
         SkillSnapshotRepository::get_all(pool),
@@ -98,121 +102,106 @@ async fn upsert_data(data: Vec<CommonJobAdDto>, pool: &Pool<Postgres>) -> color_
         CompanySnapshotRepository::get_all(pool),
     )?;
 
-    let mut tx = pool.begin().await?;
-
-    let existing_by_external_id: HashMap<&str, i32> = all_job_ads
-        .iter()
-        .map(|ja| (ja.external_id.as_str(), ja.job_ad_id))
+    let existing_job_ads: HashMap<String, JobAd> = existing_job_ads
+        .into_iter()
+        .map(|ja| (ja.external_id.clone(), ja))
         .collect();
 
-    // Skill name/variant -> skill_id (lowercase keys)
-    let mut skill_variant_to_id: HashMap<String, i32> = HashMap::new();
-    for skill in &all_skills {
-        skill_variant_to_id.insert(skill.name.to_lowercase(), skill.skill_id);
-    }
-    for sv in &all_skill_variants {
-        skill_variant_to_id.insert(sv.name.to_lowercase(), sv.skill_id);
-    }
+    // prepare lookups for companies
+    let mut company_by_variant = HashMap::new();
 
-    // Company name/variant -> company_id (lowercase keys)
-    let mut company_variant_to_id: HashMap<String, i32> = HashMap::new();
     for company in &all_companies {
-        company_variant_to_id.insert(company.name.to_lowercase(), company.company_id);
+        company_by_variant.insert(&company.name, company.company_id);
     }
     for cv in &all_company_variants {
-        company_variant_to_id.insert(cv.name.to_lowercase(), cv.company_id);
+        company_by_variant.insert(&cv.name, cv.company_id);
     }
 
-    // Snapshot lookups by lowercase name
-    let skill_snapshot_by_name: HashMap<String, &SkillSnapshot> = all_skill_snapshots
+    // prepare lookups for company snapshots
+    let mut company_snapshot_by_name = all_company_snapshots
         .iter()
-        .map(|ss| (ss.name.to_lowercase(), ss))
-        .collect();
+        .map(|cs| (&cs.name, cs.company_snapshot_id))
+        .collect::<HashMap<&String, i32>>();
 
-    let company_snapshot_by_name: HashMap<String, &CompanySnapshot> = all_company_snapshots
-        .iter()
-        .map(|cs| (cs.name.to_lowercase(), cs))
-        .collect();
-
-    let incoming_external_ids: HashSet<&str> = data.iter().map(|d| d.id.as_str()).collect();
-
-    let expired_ids: Vec<i32> = all_job_ads
-        .iter()
-        .filter(|ja| !incoming_external_ids.contains(ja.external_id.as_str()))
-        .map(|ja| ja.job_ad_id)
-        .collect();
-
-    if !expired_ids.is_empty() {
-        info!("Setting {} job ads to inactive", expired_ids.len());
-        JobAdRepository::set_inactive_batch(&mut *tx, &expired_ids).await?;
+    // prepare lookups for skill
+    let mut skill_by_variant: HashMap<&String, i32> = HashMap::new();
+    for skill in &all_skills {
+        skill_by_variant.insert(&skill.name, skill.skill_id);
+    }
+    for sv in &all_skill_variants {
+        skill_by_variant.insert(&sv.name, sv.skill_id);
     }
 
-    let mut new_company_snapshot_ids: HashMap<String, i32> = HashMap::new();
-    let mut new_skill_snapshot_ids: HashMap<String, i32> = HashMap::new();
+    // prepare lookups for skill snapshots
+    let mut skill_snapshot_by_name: HashMap<&String, i32> = all_skill_snapshots
+        .iter()
+        .map(|ss| (&ss.name, ss.skill_snapshot_id))
+        .collect();
 
-    for cjad in &data {
-        let company_name_lower = cjad.company_name.to_lowercase();
-        let company_id = company_variant_to_id.get(&company_name_lower).copied();
+    let new_data: Vec<CommonJobAdDto> = data
+        .into_iter()
+        .filter(|ja| !existing_job_ads.contains_key(&ja.id))
+        .collect();
 
-        let mut new_job_ad = NewJobAd::from_message(cjad);
-        new_job_ad.company_id = company_id;
+    // main uspert loop
+    for job_ad_to_insert in &new_data {
+        let mut new_job_ad = NewJobAd::from_message(job_ad_to_insert);
+        // handle company if exists
+        new_job_ad.company_id = company_by_variant
+            .get(&job_ad_to_insert.company_name)
+            .copied();
 
-        let job_ad_id = if let Some(&existing_id) = existing_by_external_id.get(cjad.id.as_str()) {
-            new_job_ad.offer_status = OfferStatus::Active;
-            JobAdRepository::update(&mut *tx, existing_id, &new_job_ad).await?;
-            existing_id
-        } else {
-            JobAdRepository::insert(&mut *tx, &new_job_ad).await?
-        };
+        let new_job_ad_id = JobAdRepository::insert(pool, &new_job_ad).await?;
 
-        if company_id.is_none() {
-            if let Some(&snapshot) = company_snapshot_by_name.get(&company_name_lower) {
+        // If no company exists, check if a snapshot exists
+        if new_job_ad.company_id.is_none() {
+            if let Some(company_snapshot_id) =
+                company_snapshot_by_name.get(&job_ad_to_insert.company_name)
+            {
                 CompanySnapshotRepository::append_job_ad_id(
                     &mut *tx,
-                    snapshot.company_snapshot_id,
-                    job_ad_id,
+                    *company_snapshot_id,
+                    new_job_ad_id,
                 )
                 .await?;
-            } else if let Some(&snapshot_id) = new_company_snapshot_ids.get(&company_name_lower) {
-                CompanySnapshotRepository::append_job_ad_id(&mut *tx, snapshot_id, job_ad_id)
-                    .await?;
             } else {
-                let snapshot = NewCompanySnapshot {
-                    name: cjad.company_name.clone(),
-                    job_ad_ids: vec![job_ad_id],
+                // If no snapshot exists, insert a new company snapshot
+                let new_company_snapshot = NewCompanySnapshot {
+                    name: job_ad_to_insert.company_name.clone(),
+                    job_ad_ids: vec![new_job_ad_id],
                 };
-                let snapshot_id = CompanySnapshotRepository::insert(&mut *tx, &snapshot).await?;
-                new_company_snapshot_ids.insert(company_name_lower.clone(), snapshot_id);
+                let new_company_snapshot_id =
+                    CompanySnapshotRepository::insert(&mut *tx, &new_company_snapshot).await?;
+                company_snapshot_by_name
+                    .insert(&job_ad_to_insert.company_name, new_company_snapshot_id);
             }
         }
 
-        if let Some(skills) = &cjad.skills {
-            for skill_name in skills {
-                let skill_name_lower = skill_name.to_lowercase();
-
-                if let Some(&skill_id) = skill_variant_to_id.get(&skill_name_lower) {
-                    JobAdSkillRepository::insert(&mut *tx, job_ad_id, skill_id).await?;
-                } else if let Some(&snapshot) = skill_snapshot_by_name.get(&skill_name_lower) {
+        // handle skills if exists
+        if let Some(ja_skills) = &job_ad_to_insert.skills {
+            for ja_skill in ja_skills {
+                // if the skills exists append new pair (job_ad, skill_id)
+                if let Some(&skill_id) = skill_by_variant.get(ja_skill) {
+                    JobAdSkillRepository::insert(&mut *tx, new_job_ad_id, skill_id).await?;
+                }
+                // if the skill snapshot exists, append new job_ad_id to the snapshot
+                else if let Some(skill_snapshot_id) = skill_snapshot_by_name.get(&ja_skill) {
                     SkillSnapshotRepository::append_skill_snapshot_job_ad_id(
                         &mut *tx,
-                        snapshot.skill_snapshot_id,
-                        job_ad_id,
+                        *skill_snapshot_id,
+                        new_job_ad_id,
                     )
                     .await?;
-                } else if let Some(&snapshot_id) = new_skill_snapshot_ids.get(&skill_name_lower) {
-                    SkillSnapshotRepository::append_skill_snapshot_job_ad_id(
-                        &mut *tx,
-                        snapshot_id,
-                        job_ad_id,
-                    )
-                    .await?;
-                } else {
-                    let snapshot = NewSkillSnapshot {
-                        name: skill_name.clone(),
-                        job_ad_ids: vec![job_ad_id],
+                }
+                // if no skill snapshot exists, appen a new skill snapshot
+                else {
+                    let new_skill_snapshot = NewSkillSnapshot {
+                        name: ja_skill.clone(),
+                        job_ad_ids: vec![new_job_ad_id],
                     };
-                    let snapshot_id = SkillSnapshotRepository::insert(&mut *tx, &snapshot).await?;
-                    new_skill_snapshot_ids.insert(skill_name_lower, snapshot_id);
+                    let new_skill_snapshot_id =
+                        SkillSnapshotRepository::insert(&mut *tx, &new_skill_snapshot).await?;
+                    skill_snapshot_by_name.insert(ja_skill, new_skill_snapshot_id);
                 }
             }
         }
@@ -221,14 +210,10 @@ async fn upsert_data(data: Vec<CommonJobAdDto>, pool: &Pool<Postgres>) -> color_
     tx.commit().await?;
 
     info!(
-        "Upsert complete: {} total, {} new, {} updated, {} expired",
-        data.len(),
-        data.len() - existing_by_external_id.len().min(data.len()),
-        data.iter()
-            .filter(|d| existing_by_external_id.contains_key(d.id.as_str()))
-            .count(),
-        expired_ids.len(),
+        "Upsert complete: {} total, {} new in {}ms.",
+        data_len,
+        new_data.len(),
+        start.elapsed().as_millis()
     );
-
     Ok(())
 }
