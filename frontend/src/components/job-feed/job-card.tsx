@@ -1,19 +1,12 @@
+import { useState } from "react"
 import { Bookmark } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-import { type Job, workTypeColor } from "./data"
-
-function Dot({ color }: { color: string }) {
-  return (
-    <span
-      className="inline-block size-[7px] flex-none rounded-full"
-      style={{ background: color }}
-    />
-  )
-}
+import { formatSalary, getJobAd, type JobAdDetails } from "@/lib/api"
+import { type Job } from "./data"
 
 function LogoBadge({
   job,
@@ -25,7 +18,7 @@ function LogoBadge({
   return (
     <div
       className={cn(
-        "flex flex-none items-center justify-center font-display font-bold",
+        "flex flex-none items-center justify-center font-sans font-bold",
         className
       )}
       style={{ background: job.logoBg, color: job.logoColor }}
@@ -39,204 +32,230 @@ function SkillChip({ label }: { label: string }) {
   return (
     <Badge
       variant="outline"
-      className="rounded-md px-[9px] py-1 font-mono text-[11.5px] font-normal text-[#b8bdc7]"
+      className="rounded-md px-[9px] py-1 font-mono text-[11.5px] font-normal text-fg-soft"
     >
       {label}
     </Badge>
   )
 }
 
-function SaveButton({ iconClassName = "size-[18px]" }: { iconClassName?: string }) {
+// NOTE: saving a role is not wired to any logic yet (same as before the
+// redesign) — the design toggles a filled bookmark per job.
+function SaveButton() {
   return (
     <Button
       type="button"
       variant="ghost"
       size="icon"
       aria-label="Save role"
+      onClick={(event) => event.stopPropagation()}
       className="size-auto flex-none rounded-md p-0.5 text-muted-foreground hover:bg-transparent hover:text-muted-foreground hover:opacity-70"
     >
-      <Bookmark className={iconClassName} />
+      <Bookmark className="size-[18px]" />
     </Button>
   )
 }
 
-const cardHover =
-  "cursor-pointer transition-all hover:border-white/[0.16] hover:bg-surface-hover"
+/* ── Expanded detail section (lazy-loaded from GET /api/job-ads/{id}) ────── */
 
-/* ── Classic ──────────────────────────────────────────────────────────── */
-
-function JobCardClassic({ job }: { job: Job }) {
+function DetailSection({ label, text }: { label: string; text: string }) {
   return (
-    <Card className={cn("rounded-[14px] px-[22px] py-5", cardHover, "hover:-translate-y-px")}>
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-3.5">
-          <LogoBadge job={job} className="size-12 rounded-[12px] text-[20px]" />
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-              <span className="font-display text-[16.5px] font-semibold tracking-tight text-card-foreground">
-                {job.title}
-              </span>
-              <Badge variant="brand" size="sm">
-                {job.seniority}
-              </Badge>
-            </div>
-            <div className="mt-1.5 text-[13.5px] text-[#9ba1ab]">
-              {job.company} · {job.size} · {job.industry}
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-none flex-col items-end gap-2.5">
-          <SaveButton />
-          <span className="font-mono text-[14.5px] font-medium whitespace-nowrap text-positive">
-            {job.salary}
-          </span>
-        </div>
+    <div>
+      <div className="mb-1.5 font-mono text-[10.5px] tracking-[0.05em] text-fg-dim uppercase">
+        {label}
       </div>
-
-      <div className="mt-[15px] flex flex-wrap items-center gap-x-[13px] gap-y-1.5 font-mono text-[11.5px] text-[#7c828c]">
-        <span className="inline-flex items-center gap-1.5 text-[#9ba1ab]">
-          <Dot color={job.sourceColor} />
-          {job.source}
-        </span>
-        <span className="text-[#3a3e46]">·</span>
-        <span className="inline-flex items-center gap-1.5">
-          <Dot color={workTypeColor[job.workType]} />
-          {job.workType}
-        </span>
-        <span className="text-[#3a3e46]">·</span>
-        <span>{job.location}</span>
-        <span className="text-[#3a3e46]">·</span>
-        <span>{job.posted}</span>
-      </div>
-
-      <div className="mt-3.5 flex flex-wrap gap-[7px]">
-        {job.skills.slice(0, 4).map((skill) => (
-          <SkillChip key={skill} label={skill} />
-        ))}
-      </div>
-    </Card>
+      <p className="text-[13.5px] leading-relaxed whitespace-pre-line text-fg-soft">
+        {text}
+      </p>
+    </div>
   )
 }
 
-/* ── Compact ──────────────────────────────────────────────────────────── */
+function JobDetails({ details }: { details: JobAdDetails }) {
+  const description = details.descriptions[0]
 
-function JobCardCompact({ job }: { job: Job }) {
+  return (
+    <div className="flex flex-col gap-4">
+      {details.salaries.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {details.salaries.map((salary) => (
+            <Badge
+              key={salary.salaryId}
+              variant="outline"
+              className="rounded-[7px] px-[11px] py-[5px] font-mono text-[12.5px] font-normal text-positive"
+            >
+              {formatSalary(salary)}
+            </Badge>
+          ))}
+        </div>
+      )}
+
+      {details.skills.length > 0 && (
+        <div className="flex flex-wrap gap-[7px]">
+          {details.skills.map((skill) => (
+            <SkillChip key={skill} label={skill} />
+          ))}
+        </div>
+      )}
+
+      {description?.descriptionText && (
+        <DetailSection label="About" text={description.descriptionText} />
+      )}
+      {description?.requirements && (
+        <DetailSection label="Requirements" text={description.requirements} />
+      )}
+      {description?.benefits && (
+        <DetailSection label="Benefits" text={description.benefits} />
+      )}
+
+      {details.salaries.length === 0 &&
+        details.skills.length === 0 &&
+        !description && (
+          <p className="text-[13px] text-muted-foreground">
+            No additional details available for this role.
+          </p>
+        )}
+    </div>
+  )
+}
+
+/* ── Card ─────────────────────────────────────────────────────────────────── */
+
+// Layout follows the design: colored left edge, 52px initial square, meta row
+// above a large title on the left, and a save/seniority/posted column on the
+// right. NOTE for later: the design also shows salary and company
+// size/industry directly on the card — the list endpoint doesn't return
+// those, so salary only appears in the expanded details and the skill chips
+// are placeholders (see data.ts). The design has
+// no expand affordance; clicking anywhere on the card still expands it because
+// that's how details load today.
+function JobCardClassic({ job }: { job: Job }) {
+  const [expanded, setExpanded] = useState(false)
+  const [details, setDetails] = useState<JobAdDetails | null>(null)
+  const [status, setStatus] = useState<"idle" | "loading" | "error">("idle")
+
+  async function toggle() {
+    const next = !expanded
+    setExpanded(next)
+
+    if (next && details === null && status !== "loading") {
+      setStatus("loading")
+      try {
+        setDetails(await getJobAd(job.id))
+        setStatus("idle")
+      } catch {
+        setStatus("error")
+      }
+    }
+  }
+
   return (
     <Card
-      className={cn(
-        "grid grid-cols-[auto_1fr_auto_auto] items-center gap-4 rounded-[11px] px-[18px] py-[13px]",
-        cardHover
-      )}
+      className="relative rounded-[12px] border-l-[3px] py-[22px] pr-6 pl-[22px] transition-all hover:border-white/[0.16] hover:bg-surface-hover"
+      style={{ borderLeftColor: job.logoColor }}
     >
-      <LogoBadge job={job} className="size-9 rounded-[9px] text-[15px]" />
+      {job.isNew && (
+        <Badge
+          variant="outline"
+          size="sm"
+          className="absolute -top-[9px] right-[18px] border-positive/40 bg-card text-positive"
+        >
+          New
+        </Badge>
+      )}
+      <div
+        role="button"
+        tabIndex={0}
+        aria-expanded={expanded}
+        onClick={toggle}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault()
+            void toggle()
+          }
+        }}
+        className="cursor-pointer outline-none"
+      >
+        <div className="flex items-start gap-[18px]">
+          <LogoBadge
+            job={job}
+            className="size-[52px] rounded-[10px] text-[21px]"
+          />
 
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-          <span className="font-display text-[14.5px] font-semibold text-card-foreground">
-            {job.title}
-          </span>
-          <span className="text-[12.5px] text-[#7c828c]">{job.company}</span>
-          <span className="text-[9.5px] font-semibold tracking-[0.04em] text-brand-soft uppercase">
-            {job.seniority}
-          </span>
-        </div>
-        <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 font-mono text-[11px] text-[#7c828c]">
-          <span className="inline-flex items-center gap-1.5">
-            <Dot color={workTypeColor[job.workType]} />
-            {job.workType} · {job.location}
-          </span>
-          <span className="text-[#3a3e46]">·</span>
-          <span>{job.posted}</span>
-          <span className="text-[#3a3e46]">·</span>
-          <span className="text-[#5a6068]">{job.skills.slice(0, 3).join(" · ")}</span>
-        </div>
-      </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-6">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                  <span
+                    className="font-mono text-[10px] font-bold tracking-[0.12em] uppercase"
+                    style={{ color: job.logoColor }}
+                  >
+                    {job.category}
+                  </span>
+                  <span className="font-mono text-[11px] tracking-[0.04em] text-fg-dim uppercase">
+                    {[job.city, ...job.workTypes].join(" · ")}
+                  </span>
+                </div>
+                <div className="mt-[7px] font-display text-[26px] leading-[1.12] text-card-foreground">
+                  {job.title}
+                </div>
+                <div className="mt-[7px] text-[13px] text-fg-mid">
+                  {job.company}
+                </div>
+                {job.skills.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {job.skills.map((skill) => (
+                      <SkillChip key={skill} label={skill} />
+                    ))}
+                  </div>
+                )}
+              </div>
 
-      <div className="flex flex-col items-end gap-1">
-        <span className="font-mono text-[13px] font-medium whitespace-nowrap text-positive">
-          {job.salary}
-        </span>
-        <span className="inline-flex items-center gap-1.5 font-mono text-[10px] text-[#7c828c]">
-          <Dot color={job.sourceColor} />
-          {job.source}
-        </span>
-      </div>
-
-      <SaveButton iconClassName="size-4" />
-    </Card>
-  )
-}
-
-/* ── Detailed ─────────────────────────────────────────────────────────── */
-
-function JobCardDetailed({ job }: { job: Job }) {
-  return (
-    <Card className={cn("rounded-2xl px-[26px] py-6", cardHover)}>
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-[15px]">
-          <LogoBadge job={job} className="size-[54px] rounded-[14px] text-[23px]" />
-          <div>
-            <div className="text-[14.5px] font-medium text-foreground">
-              {job.company}
-            </div>
-            <div className="mt-[3px] text-[12.5px] text-[#7c828c]">
-              {job.size} · {job.industry}
+              {/* Bookmark and posted·site pin the top/bottom corners so the
+                  column reads the same on every card; missing salary and
+                  seniority fall back to muted placeholder text. */}
+              <div className="flex flex-none flex-col items-end justify-between gap-2 self-stretch whitespace-nowrap">
+                <SaveButton />
+                <div className="flex flex-col items-end gap-2">
+                  {job.salary ? (
+                    <div className="font-display text-[26px] leading-none text-card-foreground">
+                      {job.salary}
+                    </div>
+                  ) : (
+                    <div className="text-[12px] text-fg-faint">
+                      Salary undisclosed
+                    </div>
+                  )}
+                  <div className="font-mono text-[9.5px] font-semibold tracking-[0.14em] text-fg-faint uppercase">
+                    {job.seniority ?? "Unspecified"}
+                  </div>
+                </div>
+                {/* mb offsets the skill chips' bottom padding + border so
+                    this line's text baseline matches the chip text. */}
+                <div className="mb-[5px] text-[11px] text-fg-dim">
+                  {job.posted} · {job.source}
+                </div>
+              </div>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-3.5">
-          <span className="inline-flex items-center gap-1.5 font-mono text-[11px] tracking-[0.03em] text-[#9ba1ab] uppercase">
-            <Dot color={job.sourceColor} />
-            {job.source}
-          </span>
-          <span className="font-mono text-[11.5px] text-[#7c828c]">
-            {job.posted}
-          </span>
-          <SaveButton iconClassName="size-[19px]" />
+      </div>
+
+      {expanded && (
+        <div className="mt-4 border-t border-white/[0.07] pt-4">
+          {status === "loading" && (
+            <p className="text-[13px] text-muted-foreground">Loading details…</p>
+          )}
+          {status === "error" && (
+            <p className="text-[13px] text-destructive">
+              Couldn’t load details. Try again later.
+            </p>
+          )}
+          {details && <JobDetails details={details} />}
         </div>
-      </div>
-
-      <h3 className="mt-[17px] font-display text-[22px] font-semibold tracking-tight text-card-foreground">
-        {job.title}
-      </h3>
-
-      <div className="mt-[13px] flex flex-wrap gap-2">
-        <Badge variant="brand" className="rounded-[7px] px-[11px] py-[5px] text-xs">
-          {job.seniority}
-        </Badge>
-        <Badge
-          variant="outline"
-          className="gap-1.5 rounded-[7px] px-[11px] py-[5px] text-[12.5px] font-normal text-[#c4c9d2]"
-        >
-          <Dot color={workTypeColor[job.workType]} />
-          {job.workType}
-        </Badge>
-        <Badge
-          variant="outline"
-          className="rounded-[7px] px-[11px] py-[5px] text-[12.5px] font-normal text-[#c4c9d2]"
-        >
-          {job.location}
-        </Badge>
-      </div>
-
-      <div className="mt-[15px] flex flex-wrap gap-[7px]">
-        {job.skills.map((skill) => (
-          <SkillChip key={skill} label={skill} />
-        ))}
-      </div>
-
-      <div className="my-5 h-px bg-white/[0.07]" />
-
-      <div className="flex items-center justify-between">
-        <span className="font-mono text-[19px] font-medium text-positive">
-          {job.salary}
-        </span>
-        <span className="text-[13.5px] font-semibold text-brand-soft">
-          View role →
-        </span>
-      </div>
+      )}
     </Card>
   )
 }
 
-export { JobCardClassic, JobCardCompact, JobCardDetailed }
+export { JobCardClassic }

@@ -1,63 +1,38 @@
-import { Button } from "@/components/ui/button"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { cn } from "@/lib/utils"
-import type { Layout } from "./data"
-
-const layouts: { key: Layout; label: string }[] = [
-  { key: "classic", label: "Classic" },
-  { key: "compact", label: "Compact" },
-  { key: "detailed", label: "Detailed" },
-]
+import { ChevronDown } from "lucide-react"
 
 interface ResultsToolbarProps {
   count: number
   total: number
-  layout: Layout
 }
 
-function ResultsToolbar({ count, total, layout }: ResultsToolbarProps) {
+// NOTE: the sort select is not wired to any logic yet (same as before the
+// redesign) — the design sorts client-side; our API would need a sort param.
+// It's a styled native <select> like in the design, not the shadcn popover
+// Select, so opening it uses the platform dropdown.
+function ResultsToolbar({ count, total }: ResultsToolbarProps) {
   return (
-    <section className="flex flex-wrap items-center justify-between gap-4 pb-[22px]">
+    <section className="mb-[18px] flex flex-wrap items-center justify-between gap-4">
       <div className="font-mono text-[13.5px] text-muted-foreground">
         <span className="font-medium text-foreground">{count}</span> of {total}{" "}
         roles
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-1 rounded-[10px] border border-white/[0.08] bg-white/[0.04] p-1">
-          {layouts.map((item) => (
-            <Button
-              key={item.key}
-              variant="ghost"
-              className={cn(
-                "h-auto rounded-[7px] px-3.5 py-1.5 text-[13px] font-semibold hover:bg-transparent",
-                item.key === layout
-                  ? "bg-[#262b34] text-card-foreground hover:bg-[#262b34] hover:text-card-foreground"
-                  : "text-[#6b7280] hover:text-[#c4c9d2]"
-              )}
-            >
-              {item.label}
-            </Button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-[12.5px] text-[#6b7280]">SORT</span>
-          <Select defaultValue="recent">
-            <SelectTrigger className="h-9 rounded-[9px] bg-white/[0.04] text-[13px] font-medium">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent align="end">
-              <SelectItem value="recent">Most recent</SelectItem>
-              <SelectItem value="salary">Salary: high to low</SelectItem>
-            </SelectContent>
-          </Select>
+      <div className="flex items-center gap-2.5">
+        <span className="font-mono text-[10px] font-semibold tracking-[0.14em] text-fg-faint uppercase">
+          Sort
+        </span>
+        <div className="relative flex items-center">
+          <select
+            defaultValue="recent"
+            className="h-9 cursor-pointer appearance-none rounded-[9px] border border-white/[0.12] bg-secondary pr-[30px] pl-[13px] text-[13px] font-medium text-card-foreground outline-none focus-visible:border-brand"
+          >
+            <option value="recent">Most recent</option>
+            <option value="salary">Salary: high to low</option>
+          </select>
+          <ChevronDown
+            className="pointer-events-none absolute right-[11px] size-[11px] text-fg-mid"
+            strokeWidth={2.5}
+          />
         </div>
       </div>
     </section>

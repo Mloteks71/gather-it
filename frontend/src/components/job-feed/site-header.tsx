@@ -1,31 +1,30 @@
-import { Search } from "lucide-react"
-
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { SearchInput } from "@/components/ui/search-input"
 import { Logo } from "./logo"
 
+// NOTE: the search input is not wired to any logic yet (same as before the
+// redesign) — the design implies live filtering of the feed.
 function SiteHeader() {
   return (
-    <header className="sticky top-0 z-20 border-b border-white/[0.07] bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-[1080px] items-center gap-6 px-6 py-3.5">
-        <div className="flex flex-none items-center gap-2.5">
+    <header className="sticky top-0 z-20 border-b border-white/[0.10] bg-background">
+      <div className="mx-auto grid max-w-[1080px] grid-cols-[1fr_auto_1fr] items-center gap-6 px-7 py-4">
+        <div className="flex items-center gap-2.5 justify-self-start">
           <Logo />
-          <span className="font-display text-[19px] font-bold tracking-tight">
-           Gather IT
+          <span className="font-display text-[24px] leading-none">
+            Gather <span className="text-brand">IT</span>
           </span>
         </div>
 
-        <div className="relative flex w-full max-w-[440px] items-center">
-          <Search className="pointer-events-none absolute left-3.5 size-4 text-muted-foreground" />
-          <Input
-            className="h-10 rounded-[10px] pl-10"
-            placeholder="Search roles, companies, skills…"
-          />
-        </div>
+        <SearchInput
+          className="w-[420px] max-w-full justify-self-center"
+          placeholder="Search roles, companies, skills…"
+        />
 
-        <div className="flex-1" />
-
-        <Button variant="outline" className="h-9 flex-none rounded-[9px] px-4">
+        <Button
+          variant="outline"
+          size="lg"
+          className="flex-none justify-self-end"
+        >
           Sign in
         </Button>
       </div>

@@ -6,9 +6,11 @@
 
 @theme inline {
     --font-heading: var(--font-display);
-    --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
-    --font-display: 'Space Grotesk', var(--font-sans);
-    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --font-sans: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Instrument Serif', serif;
+    /* The design uses no monospace face — its small uppercase labels are
+       Hanken Grotesk, so font-mono maps there too. */
+    --font-mono: 'Hanken Grotesk', ui-monospace, monospace;
 
     --color-brand: var(--brand);
     --color-brand-foreground: var(--brand-foreground);
@@ -16,6 +18,10 @@
     --color-positive: var(--positive);
     --color-surface: var(--surface);
     --color-surface-hover: var(--surface-hover);
+    --color-fg-soft: var(--fg-soft);
+    --color-fg-mid: var(--fg-mid);
+    --color-fg-dim: var(--fg-dim);
+    --color-fg-faint: var(--fg-faint);
 
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
@@ -85,18 +91,25 @@
     --positive: #5fd08a;
     --surface: #131519;
     --surface-hover: #16191e;
+
+    /* Text grays, brightest to dimmest (between --foreground and --border) */
+    --fg-soft: #b8bdc7;
+    --fg-mid: #9ba1ab;
+    --fg-dim: #7c828c;
+    --fg-faint: #6b7280;
 }
 
 .dark {
-    --background: #0a0b0e;
+    --background: #15161a;
     --foreground: #e8eaed;
-    --card: #131519;
+    --card: #1e2026;
     --card-foreground: #f4f5f7;
     --popover: #1c1f26;
     --popover-foreground: #e8eaed;
     --primary: #5b8cff;
     --primary-foreground: #0a0b0e;
-    --secondary: #1c1f26;
+    /* Filled control surface (inputs, native selects) from the design. */
+    --secondary: #202228;
     --secondary-foreground: #e8eaed;
     --muted: #16191e;
     --muted-foreground: #8a909b;
@@ -111,8 +124,13 @@
     --brand-foreground: #0a0b0e;
     --brand-soft: #8fb0ff;
     --positive: #5fd08a;
-    --surface: #131519;
-    --surface-hover: #16191e;
+    --surface: #1e2026;
+    --surface-hover: #24262d;
+
+    --fg-soft: #b8bdc7;
+    --fg-mid: #9ba1ab;
+    --fg-dim: #7c828c;
+    --fg-faint: #6b7280;
 }
 
 @layer base {
