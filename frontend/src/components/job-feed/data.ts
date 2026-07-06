@@ -1,7 +1,17 @@
-export type WorkType = "Remote" | "Hybrid" | "On-site"
+import {
+  type JobAdListItem,
+  ExperienceLevel,
+  experienceLevelLabels,
+  formatRelativeTime,
+  jobSiteLabels,
+  OfferStatus,
+  workplaceTypeLabels,
+  type WorkplaceType,
+} from "@/lib/api"
 
-export type Layout = "classic" | "compact" | "detailed"
+export type WorkType = (typeof workplaceTypeLabels)[WorkplaceType]
 
+/** The flattened, display-ready shape a job card renders. */
 export interface Job {
   id: number
   company: string
@@ -9,196 +19,93 @@ export interface Job {
   logoColor: string
   logoBg: string
   title: string
-  seniority: string
   category: string
-  workType: WorkType
-  location: string
-  salary: string
-  posted: string
-  source: string
-  sourceColor: string
-  size: string
-  industry: string
+  city: string
+  salary: string | null
+  seniority: string | null
+  workTypes: WorkType[]
   skills: string[]
+  source: string
+  posted: string
+  isNew: boolean
 }
 
-/** Maps a work type to the small status-dot colour used across the cards. */
-export const workTypeColor: Record<WorkType, string> = {
-  Remote: "#34d399",
-  Hybrid: "#fbbf24",
-  "On-site": "#8a909b",
-}
-
-export const jobs: Job[] = [
-  {
-    id: 1,
-    company: "Parallel",
-    initial: "P",
-    logoColor: "#a78bfa",
-    logoBg: "rgba(167,139,250,0.13)",
-    title: "Senior Frontend Engineer",
-    seniority: "Senior",
-    category: "Engineering",
-    workType: "Remote",
-    location: "Europe",
-    salary: "€70k–95k",
-    posted: "2h ago",
-    source: "LinkedIn",
-    sourceColor: "#5b8cff",
-    size: "50–200",
-    industry: "Fintech",
-    skills: ["React", "TypeScript", "GraphQL", "Vite"],
-  },
-  {
-    id: 2,
-    company: "Lumen Systems",
-    initial: "L",
-    logoColor: "#fbbf24",
-    logoBg: "rgba(251,191,36,0.13)",
-    title: "Product Manager, Platform",
-    seniority: "Senior",
-    category: "Product",
-    workType: "Hybrid",
-    location: "Berlin",
-    salary: "€85k–110k",
-    posted: "1d ago",
-    source: "Wellfound",
-    sourceColor: "#d4d4d8",
-    size: "200–500",
-    industry: "Enterprise SaaS",
-    skills: ["Roadmapping", "SQL", "B2B SaaS", "Discovery"],
-  },
-  {
-    id: 3,
-    company: "Nimbus Cloud",
-    initial: "N",
-    logoColor: "#38bdf8",
-    logoBg: "rgba(56,189,248,0.13)",
-    title: "DevOps Engineer",
-    seniority: "Mid",
-    category: "DevOps",
-    workType: "Remote",
-    location: "Global",
-    salary: "$120k–150k",
-    posted: "3h ago",
-    source: "Indeed",
-    sourceColor: "#6ea8fe",
-    size: "500–1k",
-    industry: "Cloud Infra",
-    skills: ["Kubernetes", "Terraform", "AWS", "Go"],
-  },
-  {
-    id: 4,
-    company: "Corewave",
-    initial: "C",
-    logoColor: "#fb7185",
-    logoBg: "rgba(251,113,133,0.13)",
-    title: "QA Automation Engineer",
-    seniority: "Mid",
-    category: "QA",
-    workType: "On-site",
-    location: "Kraków",
-    salary: "18–24k PLN/mo",
-    posted: "5d ago",
-    source: "Glassdoor",
-    sourceColor: "#34d399",
-    size: "50–200",
-    industry: "E-commerce",
-    skills: ["Playwright", "Python", "CI/CD", "REST"],
-  },
-  {
-    id: 5,
-    company: "Helix Security",
-    initial: "H",
-    logoColor: "#34d399",
-    logoBg: "rgba(52,211,153,0.13)",
-    title: "Cybersecurity Analyst",
-    seniority: "Mid",
-    category: "Security",
-    workType: "Hybrid",
-    location: "Warsaw",
-    salary: "€60k–80k",
-    posted: "6h ago",
-    source: "LinkedIn",
-    sourceColor: "#5b8cff",
-    size: "200–500",
-    industry: "Cybersecurity",
-    skills: ["SIEM", "Threat Intel", "SOC", "Splunk"],
-  },
-  {
-    id: 6,
-    company: "Quanta Health",
-    initial: "Q",
-    logoColor: "#2dd4bf",
-    logoBg: "rgba(45,212,191,0.13)",
-    title: "Data Engineer",
-    seniority: "Senior",
-    category: "Data",
-    workType: "Remote",
-    location: "Global",
-    salary: "$130k–165k",
-    posted: "4h ago",
-    source: "Wellfound",
-    sourceColor: "#d4d4d8",
-    size: "200–500",
-    industry: "HealthTech",
-    skills: ["Spark", "Airflow", "dbt", "Snowflake"],
-  },
+/** Deterministic logo colours so the same company always looks the same. */
+const logoPalette: { color: string; bg: string }[] = [
+  { color: "#a78bfa", bg: "rgba(167,139,250,0.13)" },
+  { color: "#fbbf24", bg: "rgba(251,191,36,0.13)" },
+  { color: "#38bdf8", bg: "rgba(56,189,248,0.13)" },
+  { color: "#fb7185", bg: "rgba(251,113,133,0.13)" },
+  { color: "#34d399", bg: "rgba(52,211,153,0.13)" },
+  { color: "#2dd4bf", bg: "rgba(45,212,191,0.13)" },
+  { color: "#c084fc", bg: "rgba(192,132,252,0.13)" },
 ]
 
-export interface FilterOption {
-  label: string
-  count: number
-  active: boolean
-}
-
-export interface FilterFacet {
-  label: string
-  options: FilterOption[]
-}
-
-export const filterFacets: FilterFacet[] = [
-  {
-    label: "Role",
-    options: [
-      { label: "Engineering", count: 2, active: true },
-      { label: "Product", count: 1, active: false },
-      { label: "Design", count: 1, active: false },
-      { label: "DevOps", count: 2, active: false },
-      { label: "Security", count: 1, active: false },
-      { label: "Data", count: 1, active: false },
-      { label: "QA", count: 1, active: false },
-    ],
-  },
-  {
-    label: "Work type",
-    options: [
-      { label: "Remote", count: 3, active: true },
-      { label: "Hybrid", count: 2, active: false },
-      { label: "On-site", count: 1, active: false },
-    ],
-  },
-  {
-    label: "Seniority",
-    options: [
-      { label: "Mid", count: 3, active: false },
-      { label: "Senior", count: 3, active: false },
-      { label: "Lead", count: 0, active: false },
-    ],
-  },
-  {
-    label: "Skills",
-    options: [
-      { label: "React", count: 1, active: false },
-      { label: "TypeScript", count: 1, active: false },
-      { label: "Go", count: 2, active: false },
-      { label: "AWS", count: 1, active: false },
-      { label: "Python", count: 1, active: false },
-    ],
-  },
+// NOTE: placeholder — the API doesn't return skills on list items (only the
+// details endpoint does) and can't filter by skill. Shared by the sidebar
+// skills group and the job cards until it can.
+export const placeholderSkillOptions = [
+  "React",
+  "TypeScript",
+  "Python",
+  "Java",
+  "Docker",
+  "Kubernetes",
+  "SQL",
+  "AWS",
 ]
 
-export const activeTokens = [
-  { facet: "role", value: "Engineering" },
-  { facet: "type", value: "Remote" },
+const placeholderCardSkills = placeholderSkillOptions.slice(0, 4)
+
+function hashString(value: string): number {
+  let hash = 0
+  for (let i = 0; i < value.length; i++) {
+    hash = (hash << 5) - hash + value.charCodeAt(i)
+    hash |= 0
+  }
+  return Math.abs(hash)
+}
+
+// Ordered by how "senior" a level reads, so we can surface the strongest one.
+const experiencePriority: ExperienceLevel[] = [
+  ExperienceLevel.Senior,
+  ExperienceLevel.Mid,
+  ExperienceLevel.Junior,
+  ExperienceLevel.Any,
 ]
+
+function pickSeniority(levels: ExperienceLevel[]): string | null {
+  for (const level of experiencePriority) {
+    if (levels.includes(level)) return experienceLevelLabels[level]
+  }
+  return null
+}
+
+/** Converts a raw API list item into the display model used by the cards. */
+export function toDisplayJob(dto: JobAdListItem): Job {
+  const company = dto.companyName?.trim() || "Unknown company"
+  const palette = logoPalette[hashString(company) % logoPalette.length]
+  const workTypes = dto.workplaceType.map((type) => workplaceTypeLabels[type])
+
+  return {
+    id: dto.jobAdId,
+    company,
+    initial: company.charAt(0).toUpperCase(),
+    logoColor: palette.color,
+    logoBg: palette.bg,
+    title: dto.title,
+    // NOTE: placeholders — the list endpoint doesn't return a job category
+    // or city yet.
+    category: "General",
+    city: "Poland",
+    // NOTE: the list endpoint doesn't return salary — the card reserves the
+    // slot so the layout holds once the API provides it.
+    salary: null,
+    seniority: pickSeniority(dto.experienceLevel),
+    workTypes,
+    skills: placeholderCardSkills,
+    source: jobSiteLabels[dto.jobSite],
+    posted: formatRelativeTime(dto.publishedAt),
+    isNew: dto.offerStatus === OfferStatus.NewlyAdded,
+  }
+}
