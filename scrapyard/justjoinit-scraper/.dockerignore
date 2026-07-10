@@ -1,0 +1,6 @@
+.env
+.env.template
+__pycache__/
+*.pyc
+Dockerfile
+.dockerignore
