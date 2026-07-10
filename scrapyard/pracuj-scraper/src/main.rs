@@ -97,7 +97,7 @@ async fn register_scraper() -> (axum::http::StatusCode, String) {
                     axum::http::StatusCode::INTERNAL_SERVER_ERROR,
                     format!(
                         "Failed to register scraper on URL: {} : HTTP {}",
-                        &scheduler_url,
+                        scheduler_url,
                         resp.status()
                     ),
                 )
