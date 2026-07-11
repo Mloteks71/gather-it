@@ -29,3 +29,6 @@ jobs:
       - name: Clippy
         run: cargo clippy --all-targets --locked -- -D warnings
         working-directory: ${{ matrix.crate }}
+      - name: Build
+        run: cargo build --locked
+        working-directory: ${{ matrix.crate }}
