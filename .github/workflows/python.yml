@@ -3,8 +3,16 @@ name: Python
 on:
   push:
     branches: ["master"]
+    paths:
+      - "scrapyard/justjoinit-scraper/**"
+      - "scrapyard/pracuj-scraper/**"
+      - ".github/workflows/python.yml"
   pull_request:
     branches: ["master"]
+    paths:
+      - "scrapyard/justjoinit-scraper/**"
+      - "scrapyard/pracuj-scraper/**"
+      - ".github/workflows/python.yml"
 
 jobs:
   build:
@@ -12,8 +20,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.12]
-
+        scraper: [justjoinit-scraper, pracuj-scraper]
+    defaults:
+      run:
+        working-directory: scrapyard/${{ matrix.scraper }}
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v6
       - name: Set up Python ${{ matrix.python-version }}
@@ -21,8 +34,10 @@ jobs:
         with:
           python-version: 3.12
           cache: "pip"
+          dependecy-path: scrapyard/${{ matrix.scraper }}/requirements.txt
+      - name: Install ruff
+        run: pip install ruff
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: Lint
-        run: |
-          ruff check .
+        run: ruff check .
