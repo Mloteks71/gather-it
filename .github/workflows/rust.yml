@@ -16,6 +16,9 @@ on:
       - "scrapyard/pracuj-scraper/**"
       - ".github/workflows/rust.yml"
 
+permissions:
+  contents: read
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -26,9 +29,6 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: true
-    permissions:
-      contents: read
-      id-token: write
     env:
       SQLX_OFFLINE: true
     defaults:
