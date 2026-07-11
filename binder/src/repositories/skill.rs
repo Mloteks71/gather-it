@@ -14,4 +14,3 @@ impl SkillRepository {
         Ok(result)
     }
 }
-
