@@ -5,13 +5,13 @@ on:
     branches: ["master"]
     paths:
       - "scrapyard/justjoinit-scraper/**"
-      - "scrapyard/pracuj-scraper/**"
+      - "scrapyard/theprotocolit-scraper/**"
       - ".github/workflows/python.yml"
   pull_request:
     branches: ["master"]
     paths:
       - "scrapyard/justjoinit-scraper/**"
-      - "scrapyard/pracuj-scraper/**"
+      - "scrapyard/theprotocolit-scraper/**"
       - ".github/workflows/python.yml"
 
 jobs:
@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        scraper: [justjoinit-scraper, pracuj-scraper]
+        scraper: [justjoinit-scraper, theprotocolit-scraper]
     defaults:
       run:
         working-directory: scrapyard/${{ matrix.scraper }}
