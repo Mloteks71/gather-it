@@ -34,7 +34,7 @@ jobs:
         with:
           python-version: 3.12
           cache: "pip"
-          dependecy-path: scrapyard/${{ matrix.scraper }}/requirements.txt
+          cache-dependency-path: scrapyard/${{ matrix.scraper }}/requirements.txt
       - name: Install ruff
         run: pip install ruff
       - name: Install dependencies
