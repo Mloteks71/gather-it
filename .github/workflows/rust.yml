@@ -3,8 +3,18 @@ name: Rust
 on:
   push:
     branches: ["master"]
+    paths:
+      - "binder/**"
+      - "scheduler/**"
+      - "scrapyard/pracuj-scraper/**"
+      - ".github/workflows/rust.yml"
   pull_request:
     branches: ["master"]
+    paths:
+      - "binder/**"
+      - "scheduler/**"
+      - "scrapyard/pracuj-scraper/**"
+      - ".github/workflows/rust.yml"
 
 jobs:
   check:
@@ -12,23 +22,29 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        crate:
-          - binder
-          - scheduler
-          - scrapyard/pracuj-scraper
+        crate: [binder, scheduler, scrapyard/pracuj-scraper]
+    concurrency:
+      group: $"{{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      id-token: write
     env:
       SQLX_OFFLINE: true
+    defaults:
+      run:
+        working-directory: ${{ matrix.crate }}
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
         with:
-          components: clippy
+          components: clippy, rustfmt
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: ${{ matrix.crate }}
+      - name: Format
+        run: cargo fmt --check
       - name: Clippy
         run: cargo clippy --all-targets --locked -- -D warnings
-        working-directory: ${{ matrix.crate }}
-      - name: Build
-        run: cargo build --locked
-        working-directory: ${{ matrix.crate }}
+      - name: Test
+        run: cargo test --all-targets --locked
