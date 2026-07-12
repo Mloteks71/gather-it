@@ -31,6 +31,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     libxml2 \
     libsqlite3-0 \
+    wget \
     && rm -rf /var/lib/apt/lists/* \
     && useradd -u 10001 -m app
 USER app
